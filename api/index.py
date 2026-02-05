@@ -118,20 +118,34 @@ def map_from_db(row: Dict[str, Any]) -> Dict[str, Any]:
 @app.get("/api/v1/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "version": "1.0.0"}
+    settings = get_settings()
+    return {
+        "status": "healthy",
+        "version": "1.0.0",
+        "supabase_configured": bool(settings["supabase_key"]),
+        "frontend_url": settings["frontend_url"] or "not set"
+    }
 
 @app.get("/api/v1/styles")
 async def list_styles():
     """Get all styles/projects."""
     try:
+        settings = get_settings()
+        if not settings["supabase_key"]:
+            raise HTTPException(
+                status_code=500,
+                detail="SUPABASE_ANON_KEY environment variable is not set"
+            )
         supabase = get_supabase()
         response = supabase.table("projects")\
             .select("*")\
             .order("updated_at", desc=True)\
             .execute()
         return {"data": [map_from_db(row) for row in response.data], "error": None}
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Supabase error: {str(e)}")
 
 @app.get("/api/v1/styles/{style_id}")
 async def get_style(style_id: str):
