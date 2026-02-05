@@ -1,0 +1,492 @@
+/**
+ * Inditex Design System - Global Styles
+ * Professional, minimal design with square corners and uppercase typography
+ */
+
+/* ========================================
+   CSS CUSTOM PROPERTIES (Design Tokens)
+   ======================================== */
+:root {
+  /* Typography */
+  --font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  /* Colors - Primary Palette */
+  --color-black: #000000;
+  --color-white: #FFFFFF;
+  --color-gray: #666666;
+  --color-gray-light: #888888;
+  --color-border: #E0E0E0;
+  --color-hover: #F5F5F5;
+  --color-bg-light: #FAFAFA;
+
+  /* Colors - Accent */
+  --color-accent: #FF6B35;
+
+  /* Colors - Status */
+  --color-status-green: #2D8A4E;
+  --color-status-red: #D32F2F;
+  --color-status-orange: #F5A623;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+
+  /* Border Radius - Square design */
+  --radius-none: 0px;
+  --radius-sm: 2px;
+}
+
+/* ========================================
+   BASE TYPOGRAPHY
+   ======================================== */
+.inditex-heading {
+  font-family: var(--font-family);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-black);
+}
+
+.inditex-heading-lg {
+  font-size: 18px;
+}
+
+.inditex-heading-md {
+  font-size: 14px;
+}
+
+.inditex-heading-sm {
+  font-size: 13px;
+}
+
+.inditex-label {
+  font-family: var(--font-family);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-gray);
+}
+
+.inditex-body {
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-black);
+}
+
+.inditex-text-muted {
+  color: var(--color-gray-light);
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--color-black);
+  color: var(--color-white);
+  font-family: var(--font-family);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius-none);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #333333;
+}
+
+.btn-primary:disabled {
+  background-color: var(--color-gray-light);
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--color-white);
+  color: var(--color-black);
+  font-family: var(--font-family);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 20px;
+  border: 1px solid var(--color-black);
+  border-radius: var(--radius-none);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-hover);
+}
+
+.btn-secondary-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: var(--color-white);
+  font-family: var(--font-family);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-none);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-secondary-dark:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--color-white);
+  color: var(--color-status-red);
+  font-family: var(--font-family);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 20px;
+  border: 1px solid var(--color-status-red);
+  border-radius: var(--radius-none);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-danger:hover {
+  background-color: #FEE2E2;
+}
+
+.btn-icon {
+  padding: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-black);
+  transition: color 0.2s;
+}
+
+.btn-icon:hover {
+  color: var(--color-gray);
+}
+
+/* ========================================
+   FORM INPUTS
+   ======================================== */
+.inditex-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-family: var(--font-family);
+  font-size: 12px;
+  color: var(--color-black);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-none);
+  transition: border-color 0.2s;
+}
+
+.inditex-input:focus {
+  outline: none;
+  border-color: var(--color-black);
+}
+
+.inditex-input::placeholder {
+  color: var(--color-gray-light);
+}
+
+.inditex-input:disabled {
+  background-color: var(--color-bg-light);
+  color: var(--color-gray);
+  cursor: not-allowed;
+}
+
+.inditex-select {
+  width: 100%;
+  padding: 10px 12px;
+  font-family: var(--font-family);
+  font-size: 12px;
+  color: var(--color-black);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-none);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.inditex-select:focus {
+  outline: none;
+  border-color: var(--color-black);
+}
+
+.inditex-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font-family: var(--font-family);
+  font-size: 12px;
+  color: var(--color-black);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-none);
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.2s;
+}
+
+.inditex-textarea:focus {
+  outline: none;
+  border-color: var(--color-black);
+}
+
+/* ========================================
+   TABLES
+   ======================================== */
+.inditex-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.inditex-table th {
+  font-family: var(--font-family);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-gray);
+  background-color: var(--color-bg-light);
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.inditex-table td {
+  font-family: var(--font-family);
+  font-size: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.inditex-table tr:hover {
+  background-color: var(--color-hover);
+}
+
+.inditex-table-compact th,
+.inditex-table-compact td {
+  padding: 8px 12px;
+}
+
+/* ========================================
+   STATUS BADGES
+   ======================================== */
+.status-badge {
+  font-family: var(--font-family);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-production,
+.status-approved,
+.status-accepted,
+.status-pass {
+  color: var(--color-status-green);
+}
+
+.status-draft,
+.status-submitted {
+  color: var(--color-gray-light);
+}
+
+.status-rejected,
+.status-fail {
+  color: var(--color-status-red);
+}
+
+.status-pending,
+.status-in-progress {
+  color: var(--color-status-orange);
+}
+
+/* ========================================
+   TABS
+   ======================================== */
+.inditex-tab {
+  font-family: var(--font-family);
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-gray);
+  padding: 12px 16px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.inditex-tab:hover {
+  color: var(--color-black);
+}
+
+.inditex-tab.active {
+  font-weight: 700;
+  color: var(--color-black);
+  border-bottom-color: var(--color-black);
+}
+
+/* ========================================
+   SECTIONS & CARDS
+   ======================================== */
+.inditex-section {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-xl);
+}
+
+.inditex-section-header {
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-black);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 16px;
+}
+
+.inditex-card {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+}
+
+.inditex-card:hover {
+  background-color: var(--color-hover);
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+.border-inditex {
+  border: 1px solid var(--color-border);
+}
+
+.border-b-inditex {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bg-inditex-light {
+  background-color: var(--color-bg-light);
+}
+
+.bg-inditex-hover {
+  background-color: var(--color-hover);
+}
+
+.text-inditex-black {
+  color: var(--color-black);
+}
+
+.text-inditex-gray {
+  color: var(--color-gray);
+}
+
+.text-inditex-muted {
+  color: var(--color-gray-light);
+}
+
+.uppercase-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-gray);
+}
+
+/* ========================================
+   FORM GROUPS
+   ======================================== */
+.form-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.form-group label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-gray);
+  margin-bottom: 6px;
+}
+
+.form-row {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+
+.form-row-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.form-row-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.form-row-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* ========================================
+   HEADER STYLES
+   ======================================== */
+.inditex-header {
+  background-color: var(--color-white);
+  border-bottom: 1px solid var(--color-border);
+  padding: 16px 24px;
+}
+
+.inditex-page-title {
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-black);
+}
+
+.inditex-page-subtitle {
+  font-family: var(--font-family);
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-gray);
+  margin-top: 2px;
+}

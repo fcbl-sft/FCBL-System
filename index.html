@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Factory Portal - FCBL</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
+          },
+          colors: {
+            inditex: {
+              black: '#000000',
+              white: '#FFFFFF',
+              gray: '#666666',
+              'gray-light': '#888888',
+              accent: '#FF6B35',
+              border: '#E0E0E0',
+              hover: '#F5F5F5',
+              'card-bg': '#EBEBEB',
+              'status-green': '#2D8A4E',
+              'status-red': '#D32F2F',
+              'status-orange': '#F5A623',
+            }
+          },
+          borderRadius: {
+            'none': '0px',
+            'sm': '2px',
+          },
+          screens: {
+            print: { raw: 'print' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Inditex Design System - Global Styles */
+    * {
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    /* Typography */
+    .inditex-heading {
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #000000;
+    }
+
+    .inditex-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666666;
+    }
+
+    .inditex-body {
+      font-size: 12px;
+      font-weight: 400;
+      color: #000000;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      background-color: #000000;
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 0px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn-primary:hover {
+      background-color: #333333;
+    }
+
+    .btn-secondary {
+      background-color: #FFFFFF;
+      color: #000000;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 10px 20px;
+      border: 1px solid #000000;
+      border-radius: 0px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background-color: #F5F5F5;
+    }
+
+    /* Inputs */
+    .inditex-input {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 12px;
+      border: 1px solid #E0E0E0;
+      border-radius: 0px;
+      background-color: #FFFFFF;
+      transition: border-color 0.2s;
+    }
+
+    .inditex-input:focus {
+      outline: none;
+      border-color: #000000;
+    }
+
+    .inditex-input::placeholder {
+      color: #888888;
+    }
+
+    /* Tables */
+    .inditex-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .inditex-table th {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666666;
+      background-color: #FAFAFA;
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #E0E0E0;
+    }
+
+    .inditex-table td {
+      font-size: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #E0E0E0;
+    }
+
+    .inditex-table tr:hover {
+      background-color: #F5F5F5;
+    }
+
+    /* Status Badges */
+    .status-production {
+      color: #2D8A4E;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 10px;
+    }
+
+    .status-draft {
+      color: #888888;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 10px;
+    }
+
+    .status-accepted {
+      color: #2D8A4E;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 10px;
+    }
+
+    .status-rejected {
+      color: #D32F2F;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 10px;
+    }
+
+    .status-pending {
+      color: #F5A623;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 10px;
+    }
+
+    /* Tabs */
+    .inditex-tab {
+      font-size: 11px;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666666;
+      padding: 12px 16px;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .inditex-tab:hover {
+      color: #000000;
+    }
+
+    .inditex-tab.active {
+      font-weight: 700;
+      color: #000000;
+      border-bottom-color: #000000;
+    }
+
+    /* Section Headers */
+    .section-header {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #000000;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #E0E0E0;
+      margin-bottom: 16px;
+    }
+
+    @media print {
+      @page {
+        size: A4;
+        margin: 0;
+      }
+
+      html,
+      body {
+        height: auto;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+      }
+
+      body>* {
+        display: none !important;
+      }
+
+      #root {
+        display: block !important;
+        position: relative !important;
+        top: 0 !important;
+        left: 0 !important;
+        background: white !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+
+      .print-reset {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        position: static !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      .print-only {
+        display: block !important;
+      }
+
+      .a4-sheet {
+        display: flex !important;
+        margin: 0 !important;
+        print-color-adjust: exact !important;
+        -webkit-print-color-adjust: exact !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: white !important;
+      }
+
+      .a4-sheet.sheet-fixed {
+        width: 297mm !important;
+        height: 210mm !important;
+        max-height: 210mm !important;
+        overflow: hidden !important;
+        page-break-after: always;
+      }
+
+      .a4-sheet.sheet-auto {
+        width: 210mm !important;
+        min-height: 297mm !important;
+        height: auto !important;
+        overflow: visible !important;
+        display: block !important;
+      }
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+
+<body class="bg-white text-black">
+  <div id="root"></div>
+  <script type="module" src="./index.tsx"></script>
+</body>
+
+</html>
