@@ -1,37 +1,16 @@
 """
 Vercel Serverless Function - Standalone FastAPI API.
-Self-contained to avoid import issues with Vercel's Python runtime.
 """
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 from datetime import datetime
-from functools import lru_cache
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from supabase import create_client, Client
+from fastapi.responses import JSONResponse
 
 # =============================================================================
-# Configuration
-# =============================================================================
-
-@lru_cache()
-def get_settings():
-    """Get environment settings."""
-    return {
-        "supabase_url": os.environ.get("SUPABASE_URL", "https://zilbigcueizkfvvpuwjp.supabase.co"),
-        "supabase_key": os.environ.get("SUPABASE_ANON_KEY", ""),
-        "frontend_url": os.environ.get("FRONTEND_URL", ""),
-    }
-
-@lru_cache()
-def get_supabase() -> Client:
-    """Get cached Supabase client."""
-    settings = get_settings()
-    return create_client(settings["supabase_url"], settings["supabase_key"])
-
-# =============================================================================
-# FastAPI App
+# FastAPI App - Initialize first before any potential import errors
 # =============================================================================
 
 app = FastAPI(
@@ -41,24 +20,46 @@ app = FastAPI(
     redoc_url="/api/redoc",
 )
 
-# CORS Configuration
-settings = get_settings()
-origins = [
-    settings["frontend_url"],
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:5173",
-]
-# Filter out empty strings
-origins = [o for o in origins if o]
-
+# CORS - Allow all origins for now
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins if origins else ["*"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# =============================================================================
+# Lazy Supabase Import (to catch import errors gracefully)
+# =============================================================================
+
+_supabase_client = None
+_supabase_error = None
+
+def get_supabase():
+    """Get Supabase client with lazy initialization."""
+    global _supabase_client, _supabase_error
+    
+    if _supabase_error:
+        raise Exception(_supabase_error)
+    
+    if _supabase_client is None:
+        try:
+            from supabase import create_client
+            url = os.environ.get("SUPABASE_URL", "https://zilbigcueizkfvvpuwjp.supabase.co")
+            key = os.environ.get("SUPABASE_ANON_KEY", "")
+            if not key:
+                _supabase_error = "SUPABASE_ANON_KEY environment variable is not set"
+                raise Exception(_supabase_error)
+            _supabase_client = create_client(url, key)
+        except ImportError as e:
+            _supabase_error = f"Failed to import supabase: {str(e)}"
+            raise Exception(_supabase_error)
+        except Exception as e:
+            _supabase_error = str(e)
+            raise
+    
+    return _supabase_client
 
 # =============================================================================
 # Data Mapping Helpers
@@ -118,34 +119,26 @@ def map_from_db(row: Dict[str, Any]) -> Dict[str, Any]:
 @app.get("/api/v1/health")
 async def health_check():
     """Health check endpoint."""
-    settings = get_settings()
+    supabase_key = os.environ.get("SUPABASE_ANON_KEY", "")
     return {
         "status": "healthy",
         "version": "1.0.0",
-        "supabase_configured": bool(settings["supabase_key"]),
-        "frontend_url": settings["frontend_url"] or "not set"
+        "supabase_configured": bool(supabase_key),
+        "supabase_url": os.environ.get("SUPABASE_URL", "not set")[:50],
     }
 
 @app.get("/api/v1/styles")
 async def list_styles():
     """Get all styles/projects."""
     try:
-        settings = get_settings()
-        if not settings["supabase_key"]:
-            raise HTTPException(
-                status_code=500,
-                detail="SUPABASE_ANON_KEY environment variable is not set"
-            )
         supabase = get_supabase()
         response = supabase.table("projects")\
             .select("*")\
             .order("updated_at", desc=True)\
             .execute()
         return {"data": [map_from_db(row) for row in response.data], "error": None}
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Supabase error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/v1/styles/{style_id}")
 async def get_style(style_id: str):
@@ -165,9 +158,10 @@ async def get_style(style_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/v1/styles")
-async def create_style(data: Dict[str, Any]):
+async def create_style(request: Request):
     """Create a new style/project."""
     try:
+        data = await request.json()
         supabase = get_supabase()
         project_id = f"proj-{int(datetime.now().timestamp() * 1000)}"
         now = datetime.now().isoformat()
@@ -196,10 +190,19 @@ async def create_style(data: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.put("/api/v1/styles/{style_id}")
+async def update_style_put(style_id: str, request: Request):
+    """Update a style/project (PUT)."""
+    return await _update_style(style_id, request)
+
 @app.patch("/api/v1/styles/{style_id}")
-async def update_style(style_id: str, data: Dict[str, Any]):
+async def update_style_patch(style_id: str, request: Request):
+    """Update a style/project (PATCH)."""
+    return await _update_style(style_id, request)
+
+async def _update_style(style_id: str, request: Request):
     """Update a style/project."""
     try:
+        data = await request.json()
         supabase = get_supabase()
         db_data = map_to_db(data)
         db_data["updated_at"] = datetime.now().isoformat()

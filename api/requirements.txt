@@ -1,5 +1,4 @@
 # Python dependencies for Vercel serverless functions
 fastapi>=0.109.0
 supabase>=2.3.0
-python-dotenv>=1.0.0
-
+httpx>=0.26.0
