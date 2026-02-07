@@ -1,7 +1,7 @@
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { Project, UserRole, ProjectStatus, PONumber } from '../types';
-import { Search, ChevronDown, X } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, X, Check } from 'lucide-react';
 import StyleCard from './StyleCard';
 import DeleteStyleModal from './DeleteStyleModal';
 import EditStyleModal from './EditStyleModal';
@@ -36,9 +36,30 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [statusFilterOpen, setStatusFilterOpen] = useState(false);
 
+  // Brand and Factory filter state
+  const [brandFilterOpen, setBrandFilterOpen] = useState(false);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [factoryFilterOpen, setFactoryFilterOpen] = useState(false);
+  const [selectedFactories, setSelectedFactories] = useState<string[]>([]);
+
   // Modal state
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+
+  // Get unique brands and factories from all projects
+  const uniqueBrands = useMemo(() => {
+    const brands = projects
+      .map(p => p.brand)
+      .filter((brand): brand is string => !!brand && brand.trim() !== '');
+    return [...new Set(brands)].sort();
+  }, [projects]);
+
+  const uniqueFactories = useMemo(() => {
+    const factories = projects
+      .map(p => p.factoryName)
+      .filter((factory): factory is string => !!factory && factory.trim() !== '');
+    return [...new Set(factories)].sort();
+  }, [projects]);
 
   const getLatestInspection = (project: Project) => {
     if (!project.inspections || project.inspections.length === 0) return null;
@@ -51,21 +72,82 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
+  // Brand filter handlers
+  const handleBrandToggle = (brand: string) => {
+    setSelectedBrands(prev =>
+      prev.includes(brand)
+        ? prev.filter(b => b !== brand)
+        : [...prev, brand]
+    );
+  };
+
+  const handleSelectAllBrands = () => {
+    if (selectedBrands.length === uniqueBrands.length) {
+      setSelectedBrands([]);
+    } else {
+      setSelectedBrands([...uniqueBrands]);
+    }
+  };
+
+  const clearBrandFilter = () => {
+    setSelectedBrands([]);
+    setBrandFilterOpen(false);
+  };
+
+  // Factory filter handlers
+  const handleFactoryToggle = (factory: string) => {
+    setSelectedFactories(prev =>
+      prev.includes(factory)
+        ? prev.filter(f => f !== factory)
+        : [...prev, factory]
+    );
+  };
+
+  const handleSelectAllFactories = () => {
+    if (selectedFactories.length === uniqueFactories.length) {
+      setSelectedFactories([]);
+    } else {
+      setSelectedFactories([...uniqueFactories]);
+    }
+  };
+
+  const clearFactoryFilter = () => {
+    setSelectedFactories([]);
+    setFactoryFilterOpen(false);
+  };
+
+  // Close dropdowns when clicking outside
+  const closeAllDropdowns = () => {
+    setStatusFilterOpen(false);
+    setBrandFilterOpen(false);
+    setFactoryFilterOpen(false);
+  };
+
   const filteredProjects = projects.filter(project => {
     const latestInsp = getLatestInspection(project);
     const qcResult = latestInsp?.data?.overallResult || 'PENDING';
     const matchesSearch = (project.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (project.poNumbers || []).some(po => po.number.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    let matchesFilter = true;
+    // Status filter
+    let matchesStatus = true;
     if (statusFilter !== 'ALL') {
       if (['ACCEPTED', 'REJECTED', 'PENDING'].includes(statusFilter)) {
-        matchesFilter = qcResult === statusFilter;
+        matchesStatus = qcResult === statusFilter;
       } else {
-        matchesFilter = project.status === statusFilter;
+        matchesStatus = project.status === statusFilter;
       }
     }
-    return matchesSearch && matchesFilter;
+
+    // Brand filter
+    const matchesBrand = selectedBrands.length === 0 ||
+      (project.brand && selectedBrands.includes(project.brand));
+
+    // Factory filter
+    const matchesFactory = selectedFactories.length === 0 ||
+      (project.factoryName && selectedFactories.includes(project.factoryName));
+
+    return matchesSearch && matchesStatus && matchesBrand && matchesFactory;
   });
 
   const statusCount = statusFilter !== 'ALL' ? filteredProjects.length : null;
@@ -106,6 +188,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     <div
       className="min-h-screen bg-white"
       style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif' }}
+      onClick={closeAllDropdowns}
     >
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center relative">
@@ -133,13 +216,14 @@ const Dashboard: React.FC<DashboardProps> = ({
               className="text-sm outline-none w-40"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
 
           {/* Status Filter */}
-          <div className="relative">
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
             <button
-              onClick={() => setStatusFilterOpen(!statusFilterOpen)}
+              onClick={() => { setStatusFilterOpen(!statusFilterOpen); setBrandFilterOpen(false); setFactoryFilterOpen(false); }}
               className={`flex items-center gap-1.5 text-xs font-bold uppercase ${statusFilter !== 'ALL' ? 'text-black' : 'text-gray-600'
                 }`}
             >
@@ -152,7 +236,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <X className="w-3 h-3" />
                 </button>
               )}
-              <ChevronDown className="w-3 h-3" />
+              {statusFilterOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
             {statusFilterOpen && (
               <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow-lg rounded-lg py-1 z-50 min-w-[140px]">
@@ -170,12 +254,116 @@ const Dashboard: React.FC<DashboardProps> = ({
             )}
           </div>
 
-          {/* Other Filters */}
-          {['MILESTONES', 'SAMPLE TASKS', 'BRAND', 'COMPANY'].map(filter => (
+          {/* Static filters */}
+          {['MILESTONES', 'SAMPLE TASKS'].map(filter => (
             <button key={filter} className="flex items-center gap-1 text-xs font-bold uppercase text-gray-600">
               {filter} <ChevronDown className="w-3 h-3" />
             </button>
           ))}
+
+          {/* BRAND Filter */}
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => { setBrandFilterOpen(!brandFilterOpen); setStatusFilterOpen(false); setFactoryFilterOpen(false); }}
+              className={`flex items-center gap-1.5 text-xs font-bold uppercase ${selectedBrands.length > 0 ? 'text-black' : 'text-gray-600'}`}
+            >
+              BRAND {selectedBrands.length > 0 && `(${selectedBrands.length})`}
+              {selectedBrands.length > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); clearBrandFilter(); }}
+                  className="ml-1 hover:text-red-500"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              {brandFilterOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
+            {brandFilterOpen && (
+              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow-lg rounded-lg py-1 z-50 min-w-[200px] max-h-[300px] overflow-y-auto">
+                {uniqueBrands.length > 0 ? (
+                  <>
+                    {uniqueBrands.map(brand => (
+                      <button
+                        key={brand}
+                        onClick={() => handleBrandToggle(brand)}
+                        className="w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span className={`w-4 h-4 border rounded flex items-center justify-center ${selectedBrands.includes(brand) ? 'bg-black border-black' : 'border-gray-300'}`}>
+                          {selectedBrands.includes(brand) && <Check className="w-3 h-3 text-white" />}
+                        </span>
+                        {brand}
+                      </button>
+                    ))}
+                    <div className="border-t border-gray-100 mt-1 pt-1">
+                      <button
+                        onClick={handleSelectAllBrands}
+                        className="w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span className={`w-4 h-4 border rounded flex items-center justify-center ${selectedBrands.length === uniqueBrands.length ? 'bg-black border-black' : 'border-gray-300'}`}>
+                          {selectedBrands.length === uniqueBrands.length && <Check className="w-3 h-3 text-white" />}
+                        </span>
+                        Select all
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="px-3 py-2 text-xs text-gray-400">No brands available</div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* FACTORY Filter */}
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => { setFactoryFilterOpen(!factoryFilterOpen); setStatusFilterOpen(false); setBrandFilterOpen(false); }}
+              className={`flex items-center gap-1.5 text-xs font-bold uppercase ${selectedFactories.length > 0 ? 'text-black' : 'text-gray-600'}`}
+            >
+              FACTORY {selectedFactories.length > 0 && `(${selectedFactories.length})`}
+              {selectedFactories.length > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); clearFactoryFilter(); }}
+                  className="ml-1 hover:text-red-500"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              {factoryFilterOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
+            {factoryFilterOpen && (
+              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow-lg rounded-lg py-1 z-50 min-w-[250px] max-h-[300px] overflow-y-auto">
+                {uniqueFactories.length > 0 ? (
+                  <>
+                    {uniqueFactories.map(factory => (
+                      <button
+                        key={factory}
+                        onClick={() => handleFactoryToggle(factory)}
+                        className="w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span className={`w-4 h-4 border rounded flex items-center justify-center ${selectedFactories.includes(factory) ? 'bg-black border-black' : 'border-gray-300'}`}>
+                          {selectedFactories.includes(factory) && <Check className="w-3 h-3 text-white" />}
+                        </span>
+                        {factory}
+                      </button>
+                    ))}
+                    <div className="border-t border-gray-100 mt-1 pt-1">
+                      <button
+                        onClick={handleSelectAllFactories}
+                        className="w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span className={`w-4 h-4 border rounded flex items-center justify-center ${selectedFactories.length === uniqueFactories.length ? 'bg-black border-black' : 'border-gray-300'}`}>
+                          {selectedFactories.length === uniqueFactories.length && <Check className="w-3 h-3 text-white" />}
+                        </span>
+                        Select all
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="px-3 py-2 text-xs text-gray-400">No factories available</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* + New Style Button */}

@@ -20,6 +20,7 @@ const NewStylePage: React.FC = () => {
     const [title, setTitle] = useState('');
     const [brand, setBrand] = useState('');
     const [team, setTeam] = useState('');
+    const [factoryName, setFactoryName] = useState('');
     const [productImage, setProductImage] = useState('');
     const [productColors, setProductColors] = useState<ProductColor[]>([]);
     const [poNumbers, setPoNumbers] = useState<PONumber[]>([{ id: `po-${Date.now()}`, number: '' }]);
@@ -113,6 +114,7 @@ const NewStylePage: React.FC = () => {
         return title.trim() !== '' &&
             brand.trim() !== '' &&
             team.trim() !== '' &&
+            factoryName.trim() !== '' &&
             poNumbers.some(po => po.number.trim() !== '');
     };
 
@@ -139,6 +141,7 @@ const NewStylePage: React.FC = () => {
                 title: title.trim(),
                 brand: brand.trim(),
                 team: team.trim(),
+                factoryName: factoryName.trim(),
                 productImage: productImage || undefined,
                 productColors,
                 poNumbers: validPoNumbers.length > 0 ? validPoNumbers : [{ id: `po-${Date.now()}`, number: 'N/A' }],
@@ -219,6 +222,20 @@ const NewStylePage: React.FC = () => {
                             onChange={e => setTeam(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                             placeholder="Enter team name"
+                        />
+                    </div>
+
+                    {/* Factory Name */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Factory Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={factoryName}
+                            onChange={e => setFactoryName(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                            placeholder="Enter factory name"
                         />
                     </div>
 

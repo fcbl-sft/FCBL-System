@@ -21,6 +21,7 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
     const [title, setTitle] = useState(project.title);
     const [brand, setBrand] = useState(project.brand || '');
     const [team, setTeam] = useState(project.team || '');
+    const [factoryName, setFactoryName] = useState(project.factoryName || '');
     const [status, setStatus] = useState<ProjectStatus>(project.status);
     const [productImage, setProductImage] = useState(project.productImage || '');
     const [productColors, setProductColors] = useState<ProductColor[]>(project.productColors || []);
@@ -43,6 +44,7 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
         setTitle(project.title);
         setBrand(project.brand || '');
         setTeam(project.team || '');
+        setFactoryName(project.factoryName || '');
         setStatus(project.status);
         setProductImage(project.productImage || '');
         setProductColors(project.productColors || []);
@@ -121,6 +123,7 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
             title,
             brand: brand || undefined,
             team: team || undefined,
+            factoryName: factoryName || undefined,
             status,
             productImage: productImage || undefined,
             productColors,
@@ -190,6 +193,20 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
                             onChange={e => setTeam(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                             placeholder="Enter team name"
+                        />
+                    </div>
+
+                    {/* Factory Name */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Factory Name
+                        </label>
+                        <input
+                            type="text"
+                            value={factoryName}
+                            onChange={e => setFactoryName(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                            placeholder="Enter factory name"
                         />
                     </div>
 

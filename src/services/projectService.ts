@@ -24,6 +24,9 @@ const normalizePONumbers = (pos: any): PONumber[] => {
 const mapFromDb = (row: any): Project => ({
     id: row.id,
     title: row.title,
+    brand: row.brand || undefined,
+    team: row.team || undefined,
+    factoryName: row.factory_name || undefined,
     productImage: row.product_image || undefined,
     productColors: row.product_colors || [],
     poNumbers: normalizePONumbers(row.po_numbers),
@@ -49,6 +52,7 @@ const mapFromDb = (row: any): Project => ({
  */
 const mapToDb = (proj: Partial<Project>): Record<string, any> => {
     const mapping: Record<string, string> = {
+        factoryName: 'factory_name',
         poNumbers: 'po_numbers',
         updatedAt: 'updated_at',
         techPackFiles: 'tech_pack_files',
