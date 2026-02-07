@@ -519,6 +519,8 @@ export interface ProductColor {
 export interface Project {
   id: string;
   title: string;
+  brand?: string;   // Brand name for the style
+  team?: string;    // Team name for the style
   productImage?: string;  // Product thumbnail URL for dashboard cards
   productColors?: ProductColor[];  // Color swatches for card display
   poNumbers: PONumber[];

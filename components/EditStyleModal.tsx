@@ -19,6 +19,8 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
 }) => {
     // Form state
     const [title, setTitle] = useState(project.title);
+    const [brand, setBrand] = useState(project.brand || '');
+    const [team, setTeam] = useState(project.team || '');
     const [status, setStatus] = useState<ProjectStatus>(project.status);
     const [productImage, setProductImage] = useState(project.productImage || '');
     const [productColors, setProductColors] = useState<ProductColor[]>(project.productColors || []);
@@ -39,6 +41,8 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
     // Reset form when project changes
     useEffect(() => {
         setTitle(project.title);
+        setBrand(project.brand || '');
+        setTeam(project.team || '');
         setStatus(project.status);
         setProductImage(project.productImage || '');
         setProductColors(project.productColors || []);
@@ -115,6 +119,8 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
     const handleSave = () => {
         onSave({
             title,
+            brand: brand || undefined,
+            team: team || undefined,
             status,
             productImage: productImage || undefined,
             productColors,
@@ -156,6 +162,34 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
                             onChange={e => setTitle(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                             placeholder="Enter style name"
+                        />
+                    </div>
+
+                    {/* Brand */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Brand
+                        </label>
+                        <input
+                            type="text"
+                            value={brand}
+                            onChange={e => setBrand(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                            placeholder="Enter brand name"
+                        />
+                    </div>
+
+                    {/* Team */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Team
+                        </label>
+                        <input
+                            type="text"
+                            value={team}
+                            onChange={e => setTeam(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                            placeholder="Enter team name"
                         />
                     </div>
 

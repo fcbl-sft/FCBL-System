@@ -10,6 +10,7 @@ import {
     LoginPage,
     DashboardPage,
     StyleLayout,
+    NewStylePage,
     NotFoundPage,
 } from '../pages';
 
@@ -38,6 +39,11 @@ const AppRouter: React.FC = () => {
             } />
 
             <Route path="/styles" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
+
+            {/* New Style page - MUST come before /styles/:id */}
+            <Route path={ROUTES.NEW_STYLE} element={
+                <ProtectedRoute><NewStylePage /></ProtectedRoute>
+            } />
 
             {/* Style Detail with nested routes - uses shared StyleLayout */}
             <Route path="/styles/:id" element={

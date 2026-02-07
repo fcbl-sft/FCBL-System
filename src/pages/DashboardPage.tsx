@@ -21,27 +21,8 @@ const DashboardPage: React.FC = () => {
         navigate(ROUTES.TECH_PACK(project.id));
     };
 
-    const handleCreateTechPack = async () => {
-        const styleName = prompt("Enter Style Name:");
-        if (!styleName) return;
-
-        const poNumberStr = prompt("Enter PO Number:");
-        if (!poNumberStr) return;
-
-        const initialPages: TechPackData[] = [JSON.parse(JSON.stringify(INITIAL_DATA))];
-        if (initialPages[0]?.header) {
-            initialPages[0].header.styleName = styleName;
-        }
-
-        const newProject = await createProject({
-            title: styleName,
-            poNumbers: [{ id: `po-${Date.now()}`, number: poNumberStr }],
-            pages: initialPages,
-        });
-
-        if (newProject) {
-            navigate(ROUTES.TECH_PACK(newProject.id));
-        }
+    const handleCreateTechPack = () => {
+        navigate(ROUTES.NEW_STYLE);
     };
 
     const handleUploadTechPack = async (file: File) => {
