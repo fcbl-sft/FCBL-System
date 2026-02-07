@@ -15,6 +15,7 @@ import {
 } from '../pages';
 
 // Content components for nested routes (these render inside StyleLayout's Outlet)
+import SummaryContent from '../pages/SummaryContent';
 import TechPackContent from '../pages/TechPackContent';
 import OrderSheetContent from '../pages/OrderSheetContent';
 import ConsumptionContent from '../pages/ConsumptionContent';
@@ -49,8 +50,9 @@ const AppRouter: React.FC = () => {
             <Route path="/styles/:id" element={
                 <ProtectedRoute><StyleLayout /></ProtectedRoute>
             }>
-                {/* Default tab = Tech Pack */}
-                <Route index element={<TechPackContent />} />
+                {/* Default tab = Summary */}
+                <Route index element={<SummaryContent />} />
+                <Route path="tech-pack" element={<TechPackContent />} />
                 <Route path="order-sheet" element={<OrderSheetContent />} />
                 <Route path="consumption" element={<ConsumptionContent />} />
                 <Route path="pp-meeting" element={<PPMeetingContent />} />

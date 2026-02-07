@@ -4,7 +4,7 @@
  */
 import React, { useState } from 'react';
 import { useParams, useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { ArrowLeft, FileText, ShoppingCart, Scale, Users, Package, FileBox, ClipboardCheck, Edit3, Trash2 } from 'lucide-react';
+import { ArrowLeft, FileText, ShoppingCart, Scale, Users, Package, FileBox, ClipboardCheck, Edit3, Trash2, Home } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
@@ -15,7 +15,7 @@ import EditStyleModal from '../../components/EditStyleModal';
 import DeleteStyleModal from '../../components/DeleteStyleModal';
 import { Project } from '../../types';
 
-type TabId = 'tech-pack' | 'order-sheet' | 'consumption' | 'pp-meeting' | 'mq-control' | 'commercial' | 'qc-inspect';
+type TabId = 'summary' | 'tech-pack' | 'order-sheet' | 'consumption' | 'pp-meeting' | 'mq-control' | 'commercial' | 'qc-inspect';
 
 interface Tab {
     id: TabId;
@@ -40,7 +40,8 @@ const StyleLayout: React.FC = () => {
 
     // Define tabs with their paths
     const TABS: Tab[] = [
-        { id: 'tech-pack', label: 'Tech Pack', icon: FileText, path: `/styles/${id}` },
+        { id: 'summary', label: 'Summary', icon: Home, path: `/styles/${id}` },
+        { id: 'tech-pack', label: 'Tech Pack', icon: FileText, path: `/styles/${id}/tech-pack` },
         { id: 'order-sheet', label: 'Order Sheet', icon: ShoppingCart, path: `/styles/${id}/order-sheet` },
         { id: 'consumption', label: 'Consumption', icon: Scale, path: `/styles/${id}/consumption` },
         { id: 'pp-meeting', label: 'PP Meeting', icon: Users, path: `/styles/${id}/pp-meeting` },
@@ -52,13 +53,14 @@ const StyleLayout: React.FC = () => {
     // Derive active tab from current URL path
     const getActiveTabFromPath = (): TabId => {
         const path = location.pathname;
+        if (path.includes('/tech-pack')) return 'tech-pack';
         if (path.includes('/order-sheet')) return 'order-sheet';
         if (path.includes('/consumption')) return 'consumption';
         if (path.includes('/pp-meeting')) return 'pp-meeting';
         if (path.includes('/materials')) return 'mq-control';
         if (path.includes('/documents/invoice') || path.includes('/documents/packing')) return 'commercial';
         if (path.includes('/inline-phase')) return 'qc-inspect';
-        return 'tech-pack';
+        return 'summary';
     };
     const activeTab = getActiveTabFromPath();
 
