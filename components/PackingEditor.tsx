@@ -177,7 +177,7 @@ const PackingEditor: React.FC<PackingEditorProps> = ({ project, onUpdate, onBack
     const newComment: Comment = {
       id: `pcomm-${Date.now()}`,
       author: 'Logistics Lead',
-      role: 'supplier',
+      role: 'viewer',
       text: commentText,
       timestamp: new Date().toISOString()
     };

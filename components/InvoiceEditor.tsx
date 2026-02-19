@@ -86,7 +86,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ project, invoice, onUpdat
         const newComment: Comment = {
             id: `icomm-${Date.now()}`,
             author: 'Commercial Team',
-            role: 'supplier',
+            role: 'viewer',
             text: commentText,
             timestamp: new Date().toISOString()
         };

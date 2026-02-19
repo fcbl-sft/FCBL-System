@@ -49,7 +49,89 @@ export interface TechPackData {
   images: TechPackImage[];
 }
 
-export type UserRole = 'buyer' | 'supplier';
+export type UserRole = 'super_admin' | 'admin' | 'director' | 'merchandiser' | 'qc' | 'viewer';
+
+// Section identifiers for access control
+export type SectionId =
+  | 'dashboard'
+  | 'summary'
+  | 'tech_pack'
+  | 'order_sheet'
+  | 'consumption'
+  | 'pp_meeting'
+  | 'mq_control'
+  | 'commercial'
+  | 'qc_inspect'
+  | 'user_management'
+  | 'role_management';
+
+// Access levels for sections
+export type SectionAccessLevel = 'full' | 'view' | 'none';
+
+// Section access map for a user
+export type SectionAccessMap = Record<SectionId, SectionAccessLevel>;
+
+// User profile from database
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  factory_id?: string;
+  section_access: SectionAccessMap;
+  is_active: boolean;
+  profile_photo_url?: string;
+  phone?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Role configuration for role management
+export interface RoleConfig {
+  id: string;
+  name: string;
+  description: string;
+  default_sections: SectionAccessMap;
+  is_system: boolean; // true for default roles that cannot be deleted
+  created_at: string;
+}
+
+// Login activity for audit logging
+export interface LoginActivity {
+  id: string;
+  user_id?: string;
+  email: string;
+  status: 'success' | 'failed' | 'locked';
+  ip_address?: string;
+  user_agent?: string;
+  timestamp: string;
+}
+
+// Account lockout tracking
+export interface AccountLockout {
+  email: string;
+  failed_attempts: number;
+  locked_until?: string;
+  last_attempt: string;
+}
+
+// Authenticated user (legacy + extended)
+export interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  role: UserRole;
+  factoryName?: string;
+  emailVerified: boolean;
+  createdAt: string;
+  lastLoginAt?: string;
+  profile?: UserProfile;
+  sectionAccess?: SectionAccessMap;
+}
+
+export type MainStatus = 'DEVELOPMENT' | 'PRE-PRODUCTION' | 'PRODUCTION' | 'FINALIZED' | 'CANCELLED';
+
+export type ProductionStage = 'Tech Pack' | 'Order Sheet' | 'Consumption' | 'PP Meeting' | 'MQ Control' | 'Commercial' | 'QC Inspection';
 
 export type ProjectStatus = 'DRAFT' | 'SUBMITTED' | 'CHANGES_REQUESTED' | 'APPROVED' | 'REJECTED' | 'PENDING' | 'ACCEPTED';
 
@@ -521,6 +603,7 @@ export interface Project {
   title: string;
   brand?: string;   // Brand name for the style
   team?: string;    // Team name for the style
+  mainStatus?: MainStatus;  // Main production stage
   factoryName?: string; // Factory name for the style
   productImage?: string;  // Product thumbnail URL for dashboard cards
   productColors?: ProductColor[];  // Color swatches for card display

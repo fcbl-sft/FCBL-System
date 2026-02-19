@@ -13,6 +13,17 @@ import {
     NewStylePage,
     NotFoundPage,
 } from '../pages';
+import ForgotPasswordPage from '../pages/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/ResetPasswordPage';
+
+// Profile, Settings, and Admin pages
+import ProfilePage from '../pages/ProfilePage';
+import SettingsPage from '../pages/SettingsPage';
+import AdminPanelPage from '../pages/AdminPanelPage';
+import UserManagementPage from '../pages/UserManagementPage';
+import UserFormPage from '../pages/UserFormPage';
+import RoleManagementPage from '../pages/RoleManagementPage';
+import ActivityLogsPage from '../pages/ActivityLogsPage';
 
 // Content components for nested routes (these render inside StyleLayout's Outlet)
 import SummaryContent from '../pages/SummaryContent';
@@ -30,6 +41,8 @@ const AppRouter: React.FC = () => {
         <Routes>
             {/* Public routes */}
             <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+            <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+            <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
 
             {/* Root redirect */}
             <Route path="/" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
@@ -37,6 +50,52 @@ const AppRouter: React.FC = () => {
             {/* Protected routes */}
             <Route path={ROUTES.DASHBOARD} element={
                 <ProtectedRoute><DashboardPage /></ProtectedRoute>
+            } />
+
+            {/* Profile & Settings */}
+            <Route path={ROUTES.PROFILE} element={
+                <ProtectedRoute><ProfilePage /></ProtectedRoute>
+            } />
+            <Route path={ROUTES.SETTINGS} element={
+                <ProtectedRoute><SettingsPage /></ProtectedRoute>
+            } />
+
+            {/* Admin Panel */}
+            <Route path={ROUTES.ADMIN} element={
+                <ProtectedRoute requiredSection="user_management" requiredAccess="view">
+                    <AdminPanelPage />
+                </ProtectedRoute>
+            } />
+
+            {/* User Management (Admin/Super Admin only) */}
+            <Route path={ROUTES.ADMIN_USERS} element={
+                <ProtectedRoute requiredSection="user_management" requiredAccess="view">
+                    <UserManagementPage />
+                </ProtectedRoute>
+            } />
+            <Route path={ROUTES.ADMIN_USER_NEW} element={
+                <ProtectedRoute requiredSection="user_management" requiredAccess="full">
+                    <UserFormPage />
+                </ProtectedRoute>
+            } />
+            <Route path="/admin/users/:id/edit" element={
+                <ProtectedRoute requiredSection="user_management" requiredAccess="full">
+                    <UserFormPage />
+                </ProtectedRoute>
+            } />
+
+            {/* Role Management (Super Admin only) */}
+            <Route path={ROUTES.ADMIN_ROLES} element={
+                <ProtectedRoute requiredSection="role_management" requiredAccess="full">
+                    <RoleManagementPage />
+                </ProtectedRoute>
+            } />
+
+            {/* Activity Logs */}
+            <Route path={ROUTES.ADMIN_LOGS} element={
+                <ProtectedRoute requiredSection="user_management" requiredAccess="view">
+                    <ActivityLogsPage />
+                </ProtectedRoute>
             } />
 
             <Route path="/styles" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
@@ -69,3 +128,5 @@ const AppRouter: React.FC = () => {
 };
 
 export default AppRouter;
+
+

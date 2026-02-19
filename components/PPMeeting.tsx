@@ -213,7 +213,7 @@ const PPMeetingComponent: React.FC<PPMeetingProps> = ({ project, onUpdate, onBac
     const newComment: Comment = {
       id: `comm-${Date.now()}`,
       author: 'Factory Team',
-      role: 'supplier',
+      role: 'viewer',
       text: commentText,
       timestamp: new Date().toISOString()
     };

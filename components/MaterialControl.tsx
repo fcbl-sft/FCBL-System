@@ -152,7 +152,7 @@ const MaterialControl: React.FC<MaterialControlProps> = ({ project, onUpdateProj
     const newComment: Comment = {
       id: `mcomm-${Date.now()}`,
       author: 'Materials Lead',
-      role: 'supplier',
+      role: 'viewer',
       text: commentText,
       timestamp: new Date().toISOString()
     };

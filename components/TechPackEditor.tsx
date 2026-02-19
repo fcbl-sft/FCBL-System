@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ArrowLeft, Upload, FileText, Trash2, Download, Image, FileSpreadsheet, FileType, File, Archive, X, CheckCircle, AlertCircle, RefreshCw, AlertTriangle, Plus } from 'lucide-react';
 import { Project, UserRole, ProjectStatus, UploadedTechPack } from '../types';
-import { supabase } from '../supabase';
+import { supabase } from '../lib/supabase';
 
 // Supported file types configuration
 const ACCEPTED_EXTENSIONS = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.svg,.bmp,.txt,.csv,.zip,.rar,.ai,.psd,.eps';

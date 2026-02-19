@@ -35,7 +35,7 @@ const TechPackPage: React.FC = () => {
     const handleAddComment = (text: string) => {
         const newComment = {
             id: `c-${Date.now()}`,
-            author: userRole === 'buyer' ? 'Buyer' : 'Supplier',
+            author: userRole === 'admin' ? 'Admin' : 'User',
             role: userRole!,
             text,
             timestamp: new Date().toISOString()

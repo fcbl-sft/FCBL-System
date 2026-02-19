@@ -178,7 +178,7 @@ const NewStylePage: React.FC = () => {
             </header>
 
             {/* Orange Accent Line */}
-            <div style={{ height: '3px', backgroundColor: '#E85D26', width: '100%' }} />
+            <div style={{ height: '3px', background: 'linear-gradient(90deg, #4CAF50, #388E3C)', width: '100%' }} />
 
             {/* Form Content */}
             <div className="max-w-2xl mx-auto px-6 py-8">

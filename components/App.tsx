@@ -10,15 +10,17 @@ import InvoiceEditor from './InvoiceEditor';
 import PackingEditor from './PackingEditor';
 import OrderSheetEditor from './OrderSheetEditor';
 import ConsumptionEditor from './ConsumptionEditor';
-import { Project, UserRole, Inspection, PPMeeting as PPMeetingType, MaterialControlItem, PONumber, Invoice, PackingInfo, TechPackData, OrderSheet, ProjectStatus, Comment, ConsumptionData } from '../types';
+import { Project, UserRole, Inspection, PPMeeting as PPMeetingType, MaterialControlItem, PONumber, Invoice, PackingInfo, TechPackData, OrderSheet, ProjectStatus, Comment, ConsumptionData, MainStatus } from '../types';
 import { INITIAL_DATA } from '../constants';
 import { supabase } from '../lib/supabase';
+import { signIn as authSignIn } from '../src/services/authService';
 
 const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<'login' | 'dashboard' | 'editor' | 'inspection' | 'materialControl' | 'ppMeeting' | 'invoice' | 'packing' | 'orderSheet' | 'consumption'>('login');
   const [currentUserRole, setCurrentUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(false);
   const [bgVideoUrl, setBgVideoUrl] = useState<string | undefined>(undefined);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -34,6 +36,7 @@ const App: React.FC = () => {
     if (proj.id) dbObj.id = proj.id;
     if (proj.title) dbObj.title = proj.title;
     if (proj.status) dbObj.status = proj.status;
+    if (proj.mainStatus !== undefined) dbObj.main_status = proj.mainStatus;
     if (proj.poNumbers) dbObj.po_numbers = proj.poNumbers;
     if (proj.updatedAt) dbObj.updated_at = proj.updatedAt;
     if (proj.techPackFiles) dbObj.tech_pack_files = proj.techPackFiles;
@@ -57,6 +60,7 @@ const App: React.FC = () => {
     title: row.title,
     poNumbers: row.po_numbers || [],
     status: row.status,
+    mainStatus: row.main_status || 'DEVELOPMENT',
     updatedAt: row.updated_at,
     techPackFiles: row.tech_pack_files || [],
     pages: row.pages || [],
@@ -89,16 +93,33 @@ const App: React.FC = () => {
 
       if (error) throw error;
       setProjects((data || []).map(mapFromDB));
-    } catch (err) {
+      setLoading(false);
+    } catch (err: any) {
+      if (err.name === 'AbortError' || err.message?.includes('AbortError')) {
+        return;
+      }
       console.error("Error fetching projects:", err);
-    } finally {
       setLoading(false);
     }
   };
 
-  const handleLogin = (role: UserRole) => {
-    setCurrentUserRole(role);
-    setCurrentScreen('dashboard');
+  const handleLogin = async (email: string, password: string): Promise<boolean> => {
+    setLoginError(null);
+    try {
+      const result = await authSignIn(email, password);
+      if (result.user) {
+        // Get role from the mapped User object
+        setCurrentUserRole(result.user.role);
+        setCurrentScreen('dashboard');
+        return true;
+      } else {
+        setLoginError(result.error || 'Login failed');
+        return false;
+      }
+    } catch (err: any) {
+      setLoginError(err.message || 'An unexpected error occurred');
+      return false;
+    }
   };
 
   const handleLogout = () => {
@@ -137,6 +158,7 @@ const App: React.FC = () => {
       title: styleName,
       poNumbers: [{ id: `po-${Date.now()}`, number: poNumber }],
       status: 'DRAFT',
+      mainStatus: 'DEVELOPMENT' as MainStatus,
       updatedAt: new Date().toISOString(),
       techPackFiles: [],
       pages: initialPages,
@@ -334,11 +356,12 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {currentScreen === 'login' && <LoginScreen onLogin={handleLogin} videoUrl={bgVideoUrl} />}
+      {currentScreen === 'login' && <LoginScreen onLogin={handleLogin} error={loginError} />}
 
       {currentScreen === 'dashboard' && (
         <Dashboard
           role={currentUserRole!}
+          userName={'User'}
           projects={projects}
           onSelectProject={(p: Project) => { setActiveProjectId(p.id); setCurrentScreen('editor'); }}
           onCreateTechPack={handleCreateTechPack}
@@ -349,6 +372,7 @@ const App: React.FC = () => {
               title: file.name,
               poNumbers: [{ id: 'default', number: 'N/A' }],
               status: 'DRAFT',
+              mainStatus: 'DEVELOPMENT' as MainStatus,
               updatedAt: new Date().toISOString(),
               pages: [JSON.parse(JSON.stringify(INITIAL_DATA))],
               techPackFiles: [{ id: `f-${Date.now()}`, name: 'PDF Import', fileUrl, uploadDate: new Date().toISOString() }],

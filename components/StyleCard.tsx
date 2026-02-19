@@ -1,6 +1,6 @@
 import React from 'react';
 import { Edit3, Trash2 } from 'lucide-react';
-import { Project, ProjectStatus } from '../types';
+import { Project, ProjectStatus, MainStatus, ProductionStage } from '../types';
 
 interface StyleCardProps {
     project: Project;
@@ -53,8 +53,32 @@ const StyleCard: React.FC<StyleCardProps> = ({ project, onClick, onEdit, onDelet
         }
     };
 
-    // Status is production if APPROVED or ACCEPTED
-    const isProduction = project.status === 'APPROVED' || project.status === 'ACCEPTED';
+    // Auto-detect current production stage
+    const getProjectStage = (): ProductionStage | null => {
+        if (project.inspections && project.inspections.length > 0) return 'QC Inspection';
+        if (project.invoices && project.invoices.length > 0) return 'Commercial';
+        if (project.materialControl && project.materialControl.length > 0) return 'MQ Control';
+        if (project.ppMeetings && project.ppMeetings.length > 0) return 'PP Meeting';
+        if (project.consumption && (project.consumption.yarnItems?.length > 0 || project.consumption.accessoryItems?.length > 0)) return 'Consumption';
+        if (project.orderSheet) return 'Order Sheet';
+        if (project.pages && project.pages.length > 0) return 'Tech Pack';
+        return null;
+    };
+
+    const mainStatus: MainStatus = project.mainStatus || 'DEVELOPMENT';
+    const productionStage = getProjectStage();
+
+    // Status color based on main status
+    const getStatusColor = () => {
+        switch (mainStatus) {
+            case 'PRODUCTION': return '#2D8A4E';
+            case 'FINALIZED': return '#1D4ED8';
+            case 'CANCELLED': return '#DC2626';
+            case 'PRE-PRODUCTION': return '#D97706';
+            case 'DEVELOPMENT': return '#6B7280';
+            default: return '#888888';
+        }
+    };
 
     return (
         <div
@@ -179,18 +203,32 @@ const StyleCard: React.FC<StyleCardProps> = ({ project, onClick, onEdit, onDelet
                     </div>
                 )}
 
-                {/* Status - Green text, no background */}
+                {/* Status - Main Stage */}
                 <div
                     className="mt-2"
                     style={{
                         fontSize: '10px',
                         fontWeight: 700,
-                        color: isProduction ? '#2D8A4E' : '#888888',
+                        color: getStatusColor(),
                         textTransform: 'uppercase'
                     }}
                 >
-                    {isProduction ? 'PRODUCTION' : project.status.replace('_', ' ')}
+                    {mainStatus}
                 </div>
+
+                {/* Production Sub-stage */}
+                {mainStatus === 'PRODUCTION' && productionStage && (
+                    <div
+                        className="mt-0.5"
+                        style={{
+                            fontSize: '9px',
+                            fontWeight: 500,
+                            color: '#6B7280'
+                        }}
+                    >
+                        └─ {productionStage}
+                    </div>
+                )}
 
                 {/* Handover Date */}
                 {deliveryDate && (

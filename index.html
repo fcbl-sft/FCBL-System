@@ -5,6 +5,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Factory Portal - FCBL</title>
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234CAF50'/%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial,sans-serif' font-weight='bold' font-size='12' fill='white'%3EFCBL%3C/text%3E%3C/svg%3E" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -21,13 +23,16 @@
               white: '#FFFFFF',
               gray: '#666666',
               'gray-light': '#888888',
-              accent: '#FF6B35',
+              accent: '#4CAF50',
               border: '#E0E0E0',
               hover: '#F5F5F5',
               'card-bg': '#EBEBEB',
-              'status-green': '#2D8A4E',
+              'status-green': '#4CAF50',
               'status-red': '#D32F2F',
               'status-orange': '#F5A623',
+              'brand-green': '#4CAF50',
+              'brand-green-dark': '#388E3C',
+              'brand-green-light': '#81C784',
             }
           },
           borderRadius: {
@@ -71,7 +76,7 @@
 
     /* Buttons */
     .btn-primary {
-      background-color: #000000;
+      background: linear-gradient(90deg, #4CAF50, #388E3C);
       color: #FFFFFF;
       font-size: 11px;
       font-weight: 700;
@@ -81,11 +86,11 @@
       border: none;
       border-radius: 0px;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: all 0.2s;
     }
 
     .btn-primary:hover {
-      background-color: #333333;
+      background: linear-gradient(90deg, #388E3C, #2E7D32);
     }
 
     .btn-secondary {
@@ -119,7 +124,7 @@
 
     .inditex-input:focus {
       outline: none;
-      border-color: #000000;
+      border-color: #4CAF50;
     }
 
     .inditex-input::placeholder {
@@ -156,10 +161,14 @@
 
     /* Status Badges */
     .status-production {
-      color: #2D8A4E;
+      color: #FFFFFF;
       font-weight: 700;
       text-transform: uppercase;
       font-size: 10px;
+      background: linear-gradient(90deg, #4CAF50, #388E3C);
+      padding: 2px 8px;
+      border-radius: 2px;
+      display: inline-block;
     }
 
     .status-draft {
@@ -170,10 +179,14 @@
     }
 
     .status-accepted {
-      color: #2D8A4E;
+      color: #FFFFFF;
       font-weight: 700;
       text-transform: uppercase;
       font-size: 10px;
+      background: linear-gradient(90deg, #4CAF50, #388E3C);
+      padding: 2px 8px;
+      border-radius: 2px;
+      display: inline-block;
     }
 
     .status-rejected {
@@ -204,13 +217,13 @@
     }
 
     .inditex-tab:hover {
-      color: #000000;
+      color: #4CAF50;
     }
 
     .inditex-tab.active {
       font-weight: 700;
-      color: #000000;
-      border-bottom-color: #000000;
+      color: #388E3C;
+      border-bottom-color: #4CAF50;
     }
 
     /* Section Headers */

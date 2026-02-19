@@ -14,8 +14,11 @@ import { INITIAL_DATA } from '../../constants';
 const DashboardPage: React.FC = () => {
     useDocumentTitle('Dashboard');
     const navigate = useNavigate();
-    const { userRole, logout } = useAuth();
+    const { userRole, signOut, profile } = useAuth();
     const { projects, createProject, updateProject, deleteProject } = useProjects();
+
+    // Get user name from profile
+    const userName = profile?.name || profile?.email || 'User';
 
     const handleSelectProject = (project: Project) => {
         navigate(ROUTES.TECH_PACK(project.id));
@@ -39,8 +42,8 @@ const DashboardPage: React.FC = () => {
         }
     };
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        await signOut();
         navigate(ROUTES.LOGIN);
     };
 
@@ -89,6 +92,7 @@ const DashboardPage: React.FC = () => {
     return (
         <Dashboard
             role={userRole!}
+            userName={userName}
             projects={projects}
             onSelectProject={handleSelectProject}
             onCreateTechPack={handleCreateTechPack}

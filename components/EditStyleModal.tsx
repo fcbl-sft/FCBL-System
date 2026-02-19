@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Plus, Trash2, Upload, Image as ImageIcon } from 'lucide-react';
-import { Project, ProjectStatus, PONumber, ProductColor } from '../types';
+import { Project, ProjectStatus, PONumber, ProductColor, MainStatus } from '../types';
 
 interface EditStyleModalProps {
     isOpen: boolean;
@@ -10,6 +10,7 @@ interface EditStyleModalProps {
 }
 
 const STATUS_OPTIONS: ProjectStatus[] = ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'PENDING'];
+const MAIN_STATUS_OPTIONS: MainStatus[] = ['DEVELOPMENT', 'PRE-PRODUCTION', 'PRODUCTION', 'FINALIZED', 'CANCELLED'];
 
 const EditStyleModal: React.FC<EditStyleModalProps> = ({
     isOpen,
@@ -23,6 +24,7 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
     const [team, setTeam] = useState(project.team || '');
     const [factoryName, setFactoryName] = useState(project.factoryName || '');
     const [status, setStatus] = useState<ProjectStatus>(project.status);
+    const [mainStatus, setMainStatus] = useState<MainStatus>(project.mainStatus || 'DEVELOPMENT');
     const [productImage, setProductImage] = useState(project.productImage || '');
     const [productColors, setProductColors] = useState<ProductColor[]>(project.productColors || []);
     const [poNumbers, setPoNumbers] = useState<PONumber[]>(project.poNumbers || []);
@@ -46,6 +48,7 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
         setTeam(project.team || '');
         setFactoryName(project.factoryName || '');
         setStatus(project.status);
+        setMainStatus(project.mainStatus || 'DEVELOPMENT');
         setProductImage(project.productImage || '');
         setProductColors(project.productColors || []);
         setPoNumbers(project.poNumbers || []);
@@ -125,6 +128,7 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
             team: team || undefined,
             factoryName: factoryName || undefined,
             status,
+            mainStatus,
             productImage: productImage || undefined,
             productColors,
             poNumbers
@@ -210,10 +214,26 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
                         />
                     </div>
 
-                    {/* Status */}
+                    {/* Main Status */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Status
+                            Main Status
+                        </label>
+                        <select
+                            value={mainStatus}
+                            onChange={e => setMainStatus(e.target.value as MainStatus)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white"
+                        >
+                            {MAIN_STATUS_OPTIONS.map(s => (
+                                <option key={s} value={s}>{s}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Approval Status */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Approval Status
                         </label>
                         <select
                             value={status}

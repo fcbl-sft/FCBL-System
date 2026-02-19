@@ -2,9 +2,9 @@
  * Style Layout - Shared layout with persistent header and tabs
  * Uses React Router's Outlet for nested route content
  */
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { ArrowLeft, FileText, ShoppingCart, Scale, Users, Package, FileBox, ClipboardCheck, Edit3, Trash2, Home } from 'lucide-react';
+import { ArrowLeft, FileText, ShoppingCart, Scale, Users, Package, FileBox, ClipboardCheck, Edit3, Trash2, Home, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
@@ -34,6 +34,34 @@ const StyleLayout: React.FC = () => {
     // Modal state
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+    // Commercial dropdown state
+    const [showCommercialDropdown, setShowCommercialDropdown] = useState(false);
+    const commercialDropdownRef = useRef<HTMLDivElement>(null);
+
+    // Commercial document options
+    const commercialItems = [
+        { id: 'invoice', label: 'Invoice', path: `/styles/${id}/documents/invoice`, active: true },
+        { id: 'packing-list', label: 'Packing List', path: `/styles/${id}/documents/packing`, active: true },
+        { id: 'bill-of-exchange', label: 'Bill of Exchange', path: null, active: false },
+        { id: 'bl-sea', label: 'BL-Sea', path: null, active: false },
+        { id: 'airway', label: 'Air Way', path: null, active: false },
+        { id: 'co', label: 'CO', path: null, active: false },
+        { id: 'beneficiary-cert', label: 'Beneficiary Certificates', path: null, active: false },
+        { id: 'noc-shipping', label: 'NOC / Shipping', path: null, active: false },
+        { id: 'noc-bank', label: 'NOC Bank', path: null, active: false },
+    ];
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (commercialDropdownRef.current && !commercialDropdownRef.current.contains(event.target as Node)) {
+                setShowCommercialDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const project = id ? getProject(id) : undefined;
     useDocumentTitle(project ? `${project.title} - Style Detail` : 'Style Detail');
@@ -169,10 +197,116 @@ const StyleLayout: React.FC = () => {
             </header>
 
             {/* PERSISTENT TAB NAVIGATION */}
-            <nav className="bg-white px-6 flex justify-center gap-0 shrink-0 overflow-x-auto" style={{ borderBottom: '1px solid #E0E0E0' }}>
+            <nav className="bg-white px-6 flex justify-center gap-0 shrink-0" style={{ borderBottom: '1px solid #E0E0E0', overflow: 'visible' }}>
                 {TABS.map(tab => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
+
+                    // Special handling for Commercial tab - show dropdown
+                    if (tab.id === 'commercial') {
+                        return (
+                            <div key={tab.id} className="relative" ref={commercialDropdownRef} style={{ position: 'relative' }}>
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        console.log('Commercial clicked, current state:', showCommercialDropdown);
+                                        setShowCommercialDropdown(!showCommercialDropdown);
+                                    }}
+                                    className="flex items-center gap-2 whitespace-nowrap transition-colors cursor-pointer"
+                                    style={{
+                                        padding: '12px 16px',
+                                        fontSize: '11px',
+                                        fontWeight: isActive ? 700 : 400,
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.5px',
+                                        color: isActive ? '#000000' : '#666666',
+                                        borderBottom: isActive ? '2px solid #000000' : '2px solid transparent',
+                                        background: 'transparent',
+                                        cursor: 'pointer'
+                                    }}
+                                    type="button"
+                                >
+                                    <Icon className="w-4 h-4" />
+                                    {tab.label}
+                                    <ChevronDown className={`w-3 h-3 transition-transform ${showCommercialDropdown ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {/* Commercial Dropdown Menu */}
+                                {showCommercialDropdown && (
+                                    <div
+                                        style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: '0',
+                                            marginTop: '0',
+                                            backgroundColor: '#FFFFFF',
+                                            border: '1px solid #E0E0E0',
+                                            borderTop: 'none',
+                                            borderRadius: '0 0 4px 4px',
+                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                                            zIndex: 9999,
+                                            minWidth: '220px'
+                                        }}
+                                    >
+                                        {/* Active Items */}
+                                        {commercialItems.filter(item => item.active).map(item => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => {
+                                                    if (item.path) {
+                                                        navigate(item.path);
+                                                        setShowCommercialDropdown(false);
+                                                    }
+                                                }}
+                                                className="w-full text-left flex items-center justify-between px-4 py-3 hover:bg-gray-100 transition-colors"
+                                                style={{
+                                                    fontSize: '12px',
+                                                    color: '#000000',
+                                                    borderBottom: '1px solid #F0F0F0',
+                                                    cursor: 'pointer',
+                                                    backgroundColor: 'transparent'
+                                                }}
+                                                type="button"
+                                            >
+                                                <span>{item.label}</span>
+                                                {location.pathname.includes(item.path || '') && (
+                                                    <span style={{ color: '#2D8A4E', fontSize: '14px' }}>✓</span>
+                                                )}
+                                            </button>
+                                        ))}
+
+                                        {/* Separator */}
+                                        <div style={{ height: '1px', backgroundColor: '#E0E0E0', margin: '4px 0' }} />
+
+                                        {/* Coming Soon Items */}
+                                        {commercialItems.filter(item => !item.active).map(item => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => {
+                                                    alert(`${item.label} - Coming Soon`);
+                                                    setShowCommercialDropdown(false);
+                                                }}
+                                                className="w-full text-left flex items-center justify-between px-4 py-2 hover:bg-gray-50 transition-colors"
+                                                style={{
+                                                    fontSize: '12px',
+                                                    color: '#999999',
+                                                    cursor: 'pointer',
+                                                    backgroundColor: 'transparent'
+                                                }}
+                                                type="button"
+                                            >
+                                                <span>{item.label}</span>
+                                                <span style={{ fontSize: '10px', color: '#AAAAAA' }}>Coming Soon</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    }
+
+                    // Regular tabs
                     return (
                         <button
                             key={tab.id}
@@ -188,6 +322,7 @@ const StyleLayout: React.FC = () => {
                                 borderBottom: isActive ? '2px solid #000000' : '2px solid transparent',
                                 background: 'transparent'
                             }}
+                            type="button"
                         >
                             <Icon className="w-4 h-4" />
                             {tab.label}

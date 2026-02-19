@@ -98,6 +98,7 @@ export const projectService = {
             const projects = (data || []).map(mapFromDb);
             return { data: projects, error: null };
         } catch (err: any) {
+            if (err.name === 'AbortError' || err.message?.includes('AbortError')) return { data: null, error: null };
             console.error('getProjects error:', err);
             return { data: null, error: err.message || 'Unknown error' };
         }

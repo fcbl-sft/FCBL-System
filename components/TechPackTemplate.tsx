@@ -44,7 +44,7 @@ const TechPackTemplate: React.FC<TechPackTemplateProps> = ({ data }) => {
         {/* Branding Area - Fixed Height for Alignment (h-32) */}
         <div className="shrink-0 h-32 border-b border-black p-4 flex items-center justify-between bg-white box-border">
           <div>
-            <h1 className="font-display font-bold text-4xl tracking-tighter uppercase">FCBL</h1>
+            <img src="/fcbl-logo.svg" alt="FCBL" style={{ height: '48px' }} />
           </div>
           <div className="text-right">
             <div className="font-bold text-4xl font-display">{data.specs.size || 'M'}</div>
