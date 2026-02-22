@@ -1,6 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Project, ConsumptionData, YarnConsumptionItem, AccessoryConsumptionItem, OrderBreakdown } from '../types';
+import { Project, ConsumptionData, YarnConsumptionItem, AccessoryConsumptionItem, OrderBreakdown, WorkflowFields, createDefaultWorkflow } from '../types';
 import { ArrowLeft, Save, Plus, Trash2, RefreshCw, AlertTriangle, CheckCircle, Lock, Scale, Package, Layers, Calculator } from 'lucide-react';
+import { useAuth } from '../src/context/AuthContext';
+import ApprovalControls from './ApprovalControls';
+import StatusBadge from './StatusBadge';
 
 interface ConsumptionEditorProps {
     project: Project;
@@ -46,6 +49,14 @@ const ConsumptionEditor: React.FC<ConsumptionEditorProps> = ({
     onBack,
     onSave
 }) => {
+    const { userRole, user, profile } = useAuth();
+    const workflow = project.consumption?.workflow || createDefaultWorkflow();
+    const isLocked = workflow.status === 'SUBMITTED' || workflow.status === 'APPROVED';
+
+    const handleWorkflowChange = (wf: WorkflowFields) => {
+        const updated: ConsumptionData = { ...(project.consumption || consumption), workflow: wf };
+        onUpdate(updated);
+    };
     // Get orderSheet from project - will update when project changes
     const orderSheet = project.orderSheet;
 
@@ -203,17 +214,22 @@ const ConsumptionEditor: React.FC<ConsumptionEditorProps> = ({
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
-                        <h1 className="font-bold text-gray-800 text-lg">{project.title}</h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="font-bold text-gray-800 text-lg">{project.title}</h1>
+                            <StatusBadge status={workflow.status} size="sm" />
+                        </div>
                         <span className="text-xs text-gray-500">Consumption Management</span>
                     </div>
                 </div>
-                <button
-                    onClick={handleSave}
-                    className="btn-primary"
-                >
-                    <Save className="w-4 h-4" />
-                    Save & Close
-                </button>
+                {!isLocked && (
+                    <button
+                        onClick={handleSave}
+                        className="btn-primary"
+                    >
+                        <Save className="w-4 h-4" />
+                        Save & Close
+                    </button>
+                )}
             </div>
 
             {/* Content */}
@@ -719,6 +735,17 @@ const ConsumptionEditor: React.FC<ConsumptionEditorProps> = ({
 
                 </div>
             </div>
+
+            {/* Approval Workflow Footer */}
+            <ApprovalControls
+                workflow={workflow}
+                onWorkflowChange={handleWorkflowChange}
+                onSave={handleSave}
+                userRole={userRole || 'viewer'}
+                userName={profile?.name || user?.fullName || 'User'}
+                userId={user?.id || ''}
+                sectionLabel="Consumption"
+            />
         </div>
     );
 };

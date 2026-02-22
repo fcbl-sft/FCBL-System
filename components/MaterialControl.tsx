@@ -1,7 +1,10 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { Project, MaterialControlItem, MaterialAttachment, Comment, FileAttachment } from '../types';
+import { Project, MaterialControlItem, MaterialAttachment, Comment, FileAttachment, WorkflowFields, createDefaultWorkflow } from '../types';
 // Fix: Added missing MessageSquare and Upload icons to the imports from lucide-react
 import { ArrowLeft, Package, Trash2, Plus, Save, Eye, X, Paperclip, FileText, AlertCircle, Clock, CheckCircle2, TrendingDown, Gauge, Search, Filter, RefreshCcw, Download, ExternalLink, FileDown, Printer, CheckCircle, Edit3, UserCircle, MessageSquare, Upload } from 'lucide-react';
+import { useAuth } from '../src/context/AuthContext';
+import ApprovalControls from './ApprovalControls';
+import StatusBadge from './StatusBadge';
 
 // For PDF generation
 declare var html2pdf: any;
@@ -16,6 +19,14 @@ interface MaterialControlProps {
 type FilterType = 'ALL' | 'DELAYED' | 'QUALITY_ISSUE' | 'FULFILLED' | 'PENDING';
 
 const MaterialControl: React.FC<MaterialControlProps> = ({ project, onUpdateProject, onUpdate, onBack }) => {
+  const { userRole, user, profile } = useAuth();
+  const workflow = project.mqControlWorkflow || createDefaultWorkflow();
+  const isLocked = workflow.status === 'SUBMITTED' || workflow.status === 'APPROVED';
+
+  const handleWorkflowChange = (wf: WorkflowFields) => {
+    onUpdateProject({ mqControlWorkflow: wf });
+  };
+
   const items = project.materialControl || [];
   const [showPreview, setShowPreview] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -270,7 +281,10 @@ const MaterialControl: React.FC<MaterialControlProps> = ({ project, onUpdateProj
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div>
-            <h1 className="font-black text-xl text-gray-800 tracking-tight">Material Control (MQ)</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="font-black text-xl text-gray-800 tracking-tight">Material Control (MQ)</h1>
+              <StatusBadge status={workflow.status} size="sm" />
+            </div>
             <div className="text-[10px] font-black uppercase text-black tracking-widest">
               Style: {project.title} | POs: {(project.poNumbers || []).map(p => p.number).join(', ')}
             </div>
@@ -280,12 +294,16 @@ const MaterialControl: React.FC<MaterialControlProps> = ({ project, onUpdateProj
           <button onClick={() => setShowPreview(true)} className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2.5 text-xs font-black hover:bg-gray-50 shadow-sm transition-all">
             <Eye className="w-4 h-4" /> Preview Summary
           </button>
-          <button onClick={() => addRow()} className="flex items-center gap-2 bg-black text-white px-4 py-2.5 text-xs font-black hover:bg-gray-800 shadow-md transition-all">
-            <Plus className="w-4 h-4" /> Add Custom Field
-          </button>
-          <button onClick={handleSave} className="flex items-center gap-2 bg-black text-white px-6 py-2.5 text-xs font-black hover:bg-gray-800 shadow-md transition-all">
-            <Save className="w-4 h-4" /> Save Data
-          </button>
+          {!isLocked && (
+            <button onClick={() => addRow()} className="flex items-center gap-2 bg-black text-white px-4 py-2.5 text-xs font-black hover:bg-gray-800 shadow-md transition-all">
+              <Plus className="w-4 h-4" /> Add Custom Field
+            </button>
+          )}
+          {!isLocked && (
+            <button onClick={handleSave} className="flex items-center gap-2 bg-black text-white px-6 py-2.5 text-xs font-black hover:bg-gray-800 shadow-md transition-all">
+              <Save className="w-4 h-4" /> Save Data
+            </button>
+          )}
         </div>
       </header>
 
@@ -722,6 +740,17 @@ const MaterialControl: React.FC<MaterialControlProps> = ({ project, onUpdateProj
           </div>
         )}
       </main>
+
+      {/* Approval Workflow Footer */}
+      <ApprovalControls
+        workflow={workflow}
+        onWorkflowChange={handleWorkflowChange}
+        onSave={handleSave}
+        userRole={userRole || 'viewer'}
+        userName={profile?.name || user?.fullName || 'User'}
+        userId={user?.id || ''}
+        sectionLabel="Material Control"
+      />
     </div>
   );
 };

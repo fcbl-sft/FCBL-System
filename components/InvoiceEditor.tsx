@@ -1,7 +1,10 @@
 
 import React, { useState, useMemo, useRef } from 'react';
-import { Project, Invoice, InvoiceLineItem, FileAttachment, Comment } from '../types';
+import { Project, Invoice, InvoiceLineItem, FileAttachment, Comment, WorkflowFields, createDefaultWorkflow } from '../types';
 import { ArrowLeft, Save, Printer, FileDown, Plus, Trash2, Building2, Banknote, Ship, MapPin, CheckCircle2, ChevronRight, X, UserCircle2, Paperclip, FileText, Download, ExternalLink, Upload, MessageSquare, Edit3, UserCircle } from 'lucide-react';
+import { useAuth } from '../src/context/AuthContext';
+import ApprovalControls from './ApprovalControls';
+import StatusBadge from './StatusBadge';
 
 // For PDF generation
 declare var html2pdf: any;
@@ -15,6 +18,14 @@ interface InvoiceEditorProps {
 }
 
 const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ project, invoice, onUpdate, onBack, onSave }) => {
+    const { userRole, user, profile } = useAuth();
+    const workflow = invoice.workflow || createDefaultWorkflow();
+    const isLocked = workflow.status === 'SUBMITTED' || workflow.status === 'APPROVED';
+
+    const handleWorkflowChange = (wf: WorkflowFields) => {
+        onUpdate({ ...invoice, workflow: wf });
+    };
+
     const [viewMode, setViewMode] = useState<'EDIT' | 'PREVIEW'>('EDIT');
     const [showSaveToast, setShowSaveToast] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -236,7 +247,10 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ project, invoice, onUpdat
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </button>
                     <div>
-                        <h1 className="font-black text-xl text-slate-800 tracking-tight">Commercial Invoice Editor</h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="font-black text-xl text-slate-800 tracking-tight">Commercial Invoice Editor</h1>
+                            <StatusBadge status={workflow.status} size="sm" />
+                        </div>
                         <div className="text-[10px] font-black uppercase text-black tracking-widest">Doc Ref: {invoice.invoiceNo} | Project: {project.title}</div>
                     </div>
                 </div>
@@ -244,9 +258,11 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ project, invoice, onUpdat
                     <button onClick={() => setViewMode(viewMode === 'EDIT' ? 'PREVIEW' : 'EDIT')} className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-5 py-2.5 font-black text-xs uppercase tracking-widest shadow-sm hover:bg-gray-50 transition-all">
                         {viewMode === 'EDIT' ? <FileDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />} {viewMode === 'EDIT' ? 'Technical Preview' : 'Technical Editor'}
                     </button>
-                    <button onClick={handleSave} className="flex items-center gap-2 bg-black text-white px-6 py-2.5 font-black text-xs uppercase tracking-widest shadow-xl hover:bg-gray-800 transition-all">
-                        <Save className="w-4 h-4" /> Save Record
-                    </button>
+                    {!isLocked && (
+                        <button onClick={handleSave} className="flex items-center gap-2 bg-black text-white px-6 py-2.5 font-black text-xs uppercase tracking-widest shadow-xl hover:bg-gray-800 transition-all">
+                            <Save className="w-4 h-4" /> Save Record
+                        </button>
+                    )}
                 </div>
             </header>
 
@@ -960,6 +976,17 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ project, invoice, onUpdat
                     </div>
                 )}
             </main>
+
+            {/* Approval Workflow Footer */}
+            <ApprovalControls
+                workflow={workflow}
+                onWorkflowChange={handleWorkflowChange}
+                onSave={handleSave}
+                userRole={userRole || 'viewer'}
+                userName={profile?.name || user?.fullName || 'User'}
+                userId={user?.id || ''}
+                sectionLabel="Invoice"
+            />
         </div>
     );
 };

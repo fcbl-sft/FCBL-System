@@ -135,6 +135,36 @@ export type ProductionStage = 'Tech Pack' | 'Order Sheet' | 'Consumption' | 'PP 
 
 export type ProjectStatus = 'DRAFT' | 'SUBMITTED' | 'CHANGES_REQUESTED' | 'APPROVED' | 'REJECTED' | 'PENDING' | 'ACCEPTED';
 
+// Approval Workflow Types
+export type ApprovalStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+
+export interface ApprovalAction {
+  id: string;
+  action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'RECALL' | 'REQUEST_REVISION';
+  userId: string;
+  userName: string;
+  userRole: UserRole;
+  timestamp: string;
+  comments?: string;
+}
+
+export interface WorkflowFields {
+  status: ApprovalStatus;
+  submittedBy?: string;
+  submittedAt?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectedBy?: string;
+  rejectedAt?: string;
+  rejectionComment?: string;
+  history: ApprovalAction[];
+}
+
+export const createDefaultWorkflow = (): WorkflowFields => ({
+  status: 'DRAFT',
+  history: []
+});
+
 export interface Comment {
   id: string;
   author: string;
@@ -143,7 +173,7 @@ export interface Comment {
   timestamp: string;
 }
 
-export type InspectionStatus = 'DRAFT' | 'SUBMITTED';
+export type InspectionStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
 
 export interface ShipmentSizeRow {
   id: string;
@@ -284,6 +314,7 @@ export interface PackingInfo {
   remarks: string;
   attachments: FileAttachment[];
   comments?: Comment[];
+  workflow?: WorkflowFields;
 }
 
 export interface InspectionData {
@@ -335,6 +366,7 @@ export interface Inspection {
   type: string;
   status: InspectionStatus;
   data: InspectionData;
+  workflow?: WorkflowFields;
 }
 
 export interface InvoiceLineItem {
@@ -398,6 +430,7 @@ export interface Invoice {
   status: 'DRAFT' | 'SUBMITTED';
   remarks?: string;
   comments?: Comment[];
+  workflow?: WorkflowFields;
 }
 
 export interface ProductionDetail {
@@ -449,6 +482,7 @@ export interface PPMeeting {
   qcMeasurementTable: QCMeasurementTableData;
   globalMasterTolerance: string;
   comments?: Comment[];
+  workflow?: WorkflowFields;
 }
 
 export interface MaterialAttachment extends FileAttachment { }
@@ -555,6 +589,7 @@ export interface OrderSheet {
   sizeRows?: ColorSizeRow[];
   accessories: POAccessories;
   remarks: string[];
+  workflow?: WorkflowFields;
 }
 
 // Yarn/Fabric consumption row
@@ -589,6 +624,7 @@ export interface ConsumptionData {
   accessoryItems: AccessoryConsumptionItem[];
   remarks?: string;
   comments?: Comment[];
+  workflow?: WorkflowFields;
 }
 
 // Product color for card display
@@ -623,5 +659,8 @@ export interface Project {
   materialRemarks?: string;
   materialAttachments?: FileAttachment[];
   materialComments?: Comment[];
+  // Workflow fields for sections stored at project level
+  techPackWorkflow?: WorkflowFields;
+  mqControlWorkflow?: WorkflowFields;
 }
 

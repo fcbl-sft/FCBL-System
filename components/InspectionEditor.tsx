@@ -1,9 +1,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Project, Inspection, ShipmentGroup, ShipmentSizeRow, AttachmentItem, QCDefectRow, QCMeasurementRow, SectionComment, PackingBoxDetail, FileAttachment } from '../types';
+import { Project, Inspection, ShipmentGroup, ShipmentSizeRow, AttachmentItem, QCDefectRow, QCMeasurementRow, SectionComment, PackingBoxDetail, FileAttachment, WorkflowFields, createDefaultWorkflow } from '../types';
 import { ArrowLeft, Eye, Edit, CheckCircle, Plus, Ruler, ClipboardList, Box, Factory, BarChart3, Trash2, Camera, Upload, Download, Package, CheckSquare, MessageSquare, FileText, X, PlusCircle, LayoutPanelTop, CheckSquare2, FileDown, PlusSquare, MinusSquare, Paperclip, ExternalLink, Settings2, Save, Printer } from 'lucide-react';
 import InspectionReportTemplate from './InspectionReportTemplate';
 import { SIZES } from '../constants';
+import { useAuth } from '../src/context/AuthContext';
+import ApprovalControls from './ApprovalControls';
+import StatusBadge from './StatusBadge';
 
 // For PDF generation
 declare var html2pdf: any;
@@ -38,6 +41,14 @@ type InspectionAttachmentTarget = {
 };
 
 const InspectionEditor: React.FC<InspectionEditorProps> = ({ project, inspection, onUpdate, onBack, onSave, onDeleteInspection }) => {
+    const { userRole, user, profile } = useAuth();
+    const workflow = inspection.workflow || createDefaultWorkflow();
+    const isLocked = workflow.status === 'SUBMITTED' || workflow.status === 'APPROVED';
+
+    const handleWorkflowChange = (wf: WorkflowFields) => {
+        onUpdate({ ...inspection, workflow: wf });
+    };
+
     const [viewMode, setViewMode] = useState<'EDIT' | 'PREVIEW'>('EDIT');
     const [isAddingStage, setIsAddingStage] = useState(false);
     const [newStageName, setNewStageName] = useState('');
@@ -48,7 +59,6 @@ const InspectionEditor: React.FC<InspectionEditorProps> = ({ project, inspection
     const imageInputRef = useRef<HTMLInputElement>(null);
 
     const data = inspection.data;
-    const isLocked = inspection.status === 'SUBMITTED';
 
     // Helper for tolerance highlighting in editor - strictly considers both (+) and (-)
     const checkTolerance = (actual: string, standard: string, tolPlus: string, tolMinus: string) => {
@@ -284,7 +294,10 @@ const InspectionEditor: React.FC<InspectionEditorProps> = ({ project, inspection
                 <div className="flex items-center gap-4">
                     <button onClick={onBack} className="p-2.5 hover:bg-gray-100 transition-all"><ArrowLeft className="w-5 h-5 text-gray-600" /></button>
                     <div>
-                        <h1 className="font-black text-xl text-slate-900 tracking-tight">{inspection.type} Phase Editor</h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="font-black text-xl text-slate-900 tracking-tight">{inspection.type} Phase Editor</h1>
+                            <StatusBadge status={workflow.status} size="sm" />
+                        </div>
                         <div className="text-[10px] font-black uppercase text-indigo-500 tracking-widest">Style: {project.title} | POs: {(project.poNumbers || []).map(p => p.number).join(', ')}</div>
                     </div>
                 </div>
@@ -292,10 +305,11 @@ const InspectionEditor: React.FC<InspectionEditorProps> = ({ project, inspection
                     <button onClick={() => setViewMode(viewMode === 'EDIT' ? 'PREVIEW' : 'EDIT')} className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-5 py-2.5 font-black text-xs uppercase tracking-widest shadow-sm hover:bg-gray-50 transition-all">
                         {viewMode === 'EDIT' ? <Eye className="w-4 h-4" /> : <Edit className="w-4 h-4" />} {viewMode === 'EDIT' ? 'Report Preview' : 'Technical Editor'}
                     </button>
-                    <button onClick={handleManualSave} className="flex items-center gap-2 bg-black text-white px-5 py-2.5 font-black text-xs uppercase tracking-widest shadow-xl hover:bg-gray-800 transition-all">
-                        <Save className="w-4 h-4" /> Save Work
-                    </button>
-                    {!isLocked && <button onClick={() => onUpdate({ ...inspection, status: 'SUBMITTED' })} className="bg-gray-800 text-white px-6 py-2.5 font-black text-xs uppercase tracking-widest shadow-xl hover:bg-slate-700 transition-all">Submit Final</button>}
+                    {!isLocked && (
+                        <button onClick={handleManualSave} className="flex items-center gap-2 bg-black text-white px-5 py-2.5 font-black text-xs uppercase tracking-widest shadow-xl hover:bg-gray-800 transition-all">
+                            <Save className="w-4 h-4" /> Save Work
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -774,6 +788,17 @@ const InspectionEditor: React.FC<InspectionEditorProps> = ({ project, inspection
                     </div>
                 </div>
             )}
+
+            {/* Approval Workflow Footer */}
+            <ApprovalControls
+                workflow={workflow}
+                onWorkflowChange={handleWorkflowChange}
+                onSave={handleManualSave}
+                userRole={userRole || 'viewer'}
+                userName={profile?.name || user?.fullName || 'User'}
+                userId={user?.id || ''}
+                sectionLabel="Inspection"
+            />
         </div>
     );
 };

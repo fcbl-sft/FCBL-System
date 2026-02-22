@@ -45,6 +45,8 @@ const mapFromDb = (row: any): Project => ({
     materialRemarks: row.material_remarks || '',
     materialAttachments: row.material_attachments || [],
     materialComments: row.material_comments || [],
+    techPackWorkflow: row.tech_pack_workflow || undefined,
+    mqControlWorkflow: row.mq_control_workflow || undefined,
 });
 
 /**
@@ -64,6 +66,8 @@ const mapToDb = (proj: Partial<Project>): Record<string, any> => {
         materialComments: 'material_comments',
         productImage: 'product_image',
         productColors: 'product_colors',
+        techPackWorkflow: 'tech_pack_workflow',
+        mqControlWorkflow: 'mq_control_workflow',
     };
 
     const result: Record<string, any> = {};

@@ -1,7 +1,10 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ArrowLeft, Upload, FileText, Trash2, Download, Image, FileSpreadsheet, FileType, File, Archive, X, CheckCircle, AlertCircle, RefreshCw, AlertTriangle, Plus } from 'lucide-react';
-import { Project, UserRole, ProjectStatus, UploadedTechPack } from '../types';
+import { Project, UserRole, ProjectStatus, UploadedTechPack, WorkflowFields, createDefaultWorkflow } from '../types';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../src/context/AuthContext';
+import ApprovalControls from './ApprovalControls';
+import StatusBadge from './StatusBadge';
 
 // Supported file types configuration
 const ACCEPTED_EXTENSIONS = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.svg,.bmp,.txt,.csv,.zip,.rar,.ai,.psd,.eps';
@@ -67,6 +70,13 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
     onUpdateProject,
     onBack
 }) => {
+    const { userRole, user, profile } = useAuth();
+    const workflow = project.techPackWorkflow || createDefaultWorkflow();
+    const isLocked = workflow.status === 'SUBMITTED' || workflow.status === 'APPROVED';
+
+    const handleWorkflowChange = (wf: WorkflowFields) => {
+        onUpdateProject({ ...project, techPackWorkflow: wf });
+    };
     const [activeFileId, setActiveFileId] = useState<string>(project.techPackFiles?.[0]?.id || '');
     const [isDragging, setIsDragging] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
@@ -545,9 +555,12 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
             <div className="h-14 bg-white flex justify-between items-center px-6 shrink-0 z-30" style={{ borderBottom: '1px solid #E0E0E0' }}>
                 <div className="flex items-center gap-4">
                     <div>
-                        <h1 style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#000000' }}>
-                            {project.title}
-                        </h1>
+                        <div className="flex items-center gap-3">
+                            <h1 style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#000000' }}>
+                                {project.title}
+                            </h1>
+                            <StatusBadge status={workflow.status} size="sm" />
+                        </div>
                         <span style={{ fontSize: '10px', color: '#666666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Tech Pack Files</span>
                     </div>
                 </div>
@@ -570,12 +583,14 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
                         accept={ACCEPTED_EXTENSIONS}
                         onChange={handleReuploadInputChange}
                     />
-                    <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="btn-primary flex items-center gap-2"
-                    >
-                        <Upload className="w-4 h-4" /> UPLOAD FILES
-                    </button>
+                    {!isLocked && (
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="btn-primary flex items-center gap-2"
+                        >
+                            <Upload className="w-4 h-4" /> UPLOAD FILES
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -854,13 +869,15 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
                                                 >
                                                     <Download className="w-3.5 h-3.5" />
                                                 </button>
-                                                <button
-                                                    onClick={(e) => handleDeleteVersion(file.id, e)}
-                                                    className="p-1 text-gray-400 hover:text-red-500"
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
+                                                {!isLocked && (
+                                                    <button
+                                                        onClick={(e) => handleDeleteVersion(file.id, e)}
+                                                        className="p-1 text-gray-400 hover:text-red-500"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -871,10 +888,21 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
                 </div>
 
                 {/* File Preview */}
-                <div className="flex-grow bg-gray-200 p-4 flex items-center justify-center">
+                <div className="flex-grow bg-gray-200 p-4 flex items-center justify-center overflow-y-auto">
                     {renderFilePreview()}
                 </div>
             </div>
+
+            {/* Approval Workflow Footer */}
+            <ApprovalControls
+                workflow={workflow}
+                onWorkflowChange={handleWorkflowChange}
+                onSave={() => onUpdateProject(project)}
+                userRole={userRole || 'viewer'}
+                userName={profile?.name || user?.fullName || 'User'}
+                userId={user?.id || ''}
+                sectionLabel="Tech Pack"
+            />
         </div>
     );
 };

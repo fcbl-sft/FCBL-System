@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Project, PackingInfo, PackingBoxDetail, FileAttachment, PONumber, Comment } from '../types';
+import { Project, PackingInfo, PackingBoxDetail, FileAttachment, PONumber, Comment, WorkflowFields, createDefaultWorkflow } from '../types';
 // Fix: Added missing MessageSquare icon from lucide-react
 import {
   ArrowLeft, Save, Printer, FileDown, Plus, Trash2,
@@ -9,6 +9,9 @@ import {
   Upload, Box, Layers, Weight, Ruler, Trash,
   FileSpreadsheet, RotateCcw, Eye, Search, Edit3, UserCircle, MessageSquare
 } from 'lucide-react';
+import { useAuth } from '../src/context/AuthContext';
+import ApprovalControls from './ApprovalControls';
+import StatusBadge from './StatusBadge';
 
 // For PDF generation
 declare var html2pdf: any;
@@ -24,6 +27,14 @@ const SIZES_KEYS = ['XS', 'S', 'M', 'L', 'XL'] as const;
 type SizeKey = typeof SIZES_KEYS[number];
 
 const PackingEditor: React.FC<PackingEditorProps> = ({ project, onUpdate, onBack, onSave }) => {
+  const { userRole, user, profile } = useAuth();
+  const workflow = project.packing?.workflow || createDefaultWorkflow();
+  const isLocked = workflow.status === 'SUBMITTED' || workflow.status === 'APPROVED';
+
+  const handleWorkflowChange = (wf: WorkflowFields) => {
+    onUpdate({ ...project.packing, workflow: wf });
+  };
+
   const [viewMode, setViewMode] = useState<'EDIT' | 'PREVIEW'>('EDIT');
   const [showSaveToast, setShowSaveToast] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -322,24 +333,31 @@ const PackingEditor: React.FC<PackingEditorProps> = ({ project, onUpdate, onBack
               <Package className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="font-black text-xl text-black tracking-tight leading-none">Packing List System</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="font-black text-xl text-black tracking-tight leading-none">Packing List System</h1>
+                <StatusBadge status={workflow.status} size="sm" />
+              </div>
               <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest mt-1">Management & Automation</div>
             </div>
           </div>
         </div>
         <div className="flex gap-2">
-          <button onClick={clearAll} className="flex items-center gap-2 bg-white border border-red-200 text-red-600 px-4 py-2 text-xs font-black hover:bg-red-50 transition-all shadow-sm">
-            <RotateCcw className="w-3.5 h-3.5" /> Clear All
-          </button>
+          {!isLocked && (
+            <button onClick={clearAll} className="flex items-center gap-2 bg-white border border-red-200 text-red-600 px-4 py-2 text-xs font-black hover:bg-red-50 transition-all shadow-sm">
+              <RotateCcw className="w-3.5 h-3.5" /> Clear All
+            </button>
+          )}
           <button onClick={handleExportCSV} className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 text-xs font-black hover:bg-gray-50 transition-all shadow-sm">
             <FileSpreadsheet className="w-3.5 h-3.5" /> Export CSV/XLSX
           </button>
           <button onClick={() => setViewMode(viewMode === 'EDIT' ? 'PREVIEW' : 'EDIT')} className="flex items-center gap-2 bg-white border border-gray-200 text-black px-4 py-2 text-xs font-black hover:bg-gray-50 transition-all shadow-sm">
             {viewMode === 'EDIT' ? <Eye className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />} {viewMode === 'EDIT' ? 'Preview' : 'Editor'}
           </button>
-          <button onClick={handleSave} className="flex items-center gap-2 bg-black text-white px-5 py-2 font-black text-xs uppercase tracking-widest shadow-xl hover:bg-gray-800 transition-all">
-            <Save className="w-3.5 h-3.5" /> Save Work
-          </button>
+          {!isLocked && (
+            <button onClick={handleSave} className="flex items-center gap-2 bg-black text-white px-5 py-2 font-black text-xs uppercase tracking-widest shadow-xl hover:bg-gray-800 transition-all">
+              <Save className="w-3.5 h-3.5" /> Save Work
+            </button>
+          )}
         </div>
       </header>
 
@@ -898,6 +916,17 @@ const PackingEditor: React.FC<PackingEditorProps> = ({ project, onUpdate, onBack
             .print-reset { margin: 0 !important; }
         }
       `}</style>
+
+      {/* Approval Workflow Footer */}
+      <ApprovalControls
+        workflow={workflow}
+        onWorkflowChange={handleWorkflowChange}
+        onSave={handleSave}
+        userRole={userRole || 'viewer'}
+        userName={profile?.name || user?.fullName || 'User'}
+        userId={user?.id || ''}
+        sectionLabel="Packing List"
+      />
     </div>
   );
 };

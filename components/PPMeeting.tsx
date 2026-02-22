@@ -1,6 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { Project, PPMeeting, ProductionDetail, Milestone, Approval, FileAttachment, Comment } from '../types';
+import { Project, PPMeeting, ProductionDetail, Milestone, Approval, FileAttachment, Comment, WorkflowFields, createDefaultWorkflow } from '../types';
 import { ArrowLeft, Users, Calendar, Plus, Trash2, ClipboardList, Timer, CheckCircle, Save, X, Eye, MessageSquare, Camera, Upload, FileDown, Paperclip, FileText, Download, ExternalLink, Printer, CheckCircle2, Edit3, UserCircle, Ruler, Settings2, PlusCircle, PlusSquare, MinusSquare } from 'lucide-react';
+import { useAuth } from '../src/context/AuthContext';
+import ApprovalControls from './ApprovalControls';
+import StatusBadge from './StatusBadge';
 
 // For PDF generation
 declare var html2pdf: any;
@@ -18,6 +21,7 @@ type AttachmentTarget = {
 };
 
 const PPMeetingComponent: React.FC<PPMeetingProps> = ({ project, onUpdate, onBack }) => {
+  const { userRole, user, profile } = useAuth();
   const [activeMeetingId, setActiveMeetingId] = useState<string | null>(project.ppMeetings?.[0]?.id || null);
   const [showPreview, setShowPreview] = useState(false);
   const [showSaveToast, setShowSaveToast] = useState(false);
@@ -32,6 +36,15 @@ const PPMeetingComponent: React.FC<PPMeetingProps> = ({ project, onUpdate, onBac
 
   const meetings = project.ppMeetings || [];
   const activeMeeting = meetings.find(m => m.id === activeMeetingId);
+
+  const meetingWorkflow = activeMeeting?.workflow || createDefaultWorkflow();
+  const isLocked = meetingWorkflow.status === 'SUBMITTED' || meetingWorkflow.status === 'APPROVED';
+
+  const handleWorkflowChange = (wf: WorkflowFields) => {
+    if (!activeMeeting) return;
+    const updated = meetings.map(m => m.id === activeMeeting.id ? { ...m, workflow: wf } : m);
+    onUpdate(updated);
+  };
 
   const handleManualSave = () => {
     setShowSaveToast(true);
@@ -304,7 +317,10 @@ const PPMeetingComponent: React.FC<PPMeetingProps> = ({ project, onUpdate, onBac
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div>
-            <h1 className="font-black text-xl text-gray-800 tracking-tight">Pre-Production Meeting (PP)</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="font-black text-xl text-gray-800 tracking-tight">Pre-Production Meeting (PP)</h1>
+              <StatusBadge status={meetingWorkflow.status} size="sm" />
+            </div>
             <div className="text-[10px] font-black uppercase text-black tracking-widest">
               Style: {project.title} | POs: {(project.poNumbers || []).map(p => p.number).join(', ')}
             </div>
@@ -316,12 +332,16 @@ const PPMeetingComponent: React.FC<PPMeetingProps> = ({ project, onUpdate, onBac
               <Eye className="w-4 h-4" /> Preview Report
             </button>
           )}
-          <button onClick={createNewMeeting} className="flex items-center gap-2 bg-black text-white px-4 py-2.5 text-xs font-black hover:bg-gray-800 shadow-md">
-            <Plus className="w-4 h-4" /> Add New Record
-          </button>
-          <button onClick={handleManualSave} className="flex items-center gap-2 bg-black text-white px-6 py-2.5 text-xs font-black hover:bg-gray-800 shadow-md transition-all">
-            <Save className="w-4 h-4" /> Save Work
-          </button>
+          {!isLocked && (
+            <button onClick={createNewMeeting} className="flex items-center gap-2 bg-black text-white px-4 py-2.5 text-xs font-black hover:bg-gray-800 shadow-md">
+              <Plus className="w-4 h-4" /> Add New Record
+            </button>
+          )}
+          {!isLocked && (
+            <button onClick={handleManualSave} className="flex items-center gap-2 bg-black text-white px-6 py-2.5 text-xs font-black hover:bg-gray-800 shadow-md transition-all">
+              <Save className="w-4 h-4" /> Save Work
+            </button>
+          )}
         </div>
       </header>
 
@@ -1098,6 +1118,19 @@ const PPMeetingComponent: React.FC<PPMeetingProps> = ({ project, onUpdate, onBac
             </div>
           </div>
         </div>
+      )}
+
+      {/* Approval Workflow Footer */}
+      {activeMeeting && (
+        <ApprovalControls
+          workflow={meetingWorkflow}
+          onWorkflowChange={handleWorkflowChange}
+          onSave={handleManualSave}
+          userRole={userRole || 'viewer'}
+          userName={profile?.name || user?.fullName || 'User'}
+          userId={user?.id || ''}
+          sectionLabel="PP Meeting"
+        />
       )}
     </div>
   );

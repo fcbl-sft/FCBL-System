@@ -1,6 +1,9 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Project, OrderSheet, OrderBreakdown, ColorSizeRow, POAccessories } from '../types';
+import { Project, OrderSheet, OrderBreakdown, ColorSizeRow, POAccessories, WorkflowFields, createDefaultWorkflow } from '../types';
 import { ArrowLeft, Save, Printer, FileDown, Plus, Trash2, Building2, ShoppingCart, Truck, MapPin, CheckCircle2, Eye, Edit3, X, Image as ImageIcon, RotateCcw, Download, Package, LayoutPanelTop, Box, CheckSquare, Layers } from 'lucide-react';
+import { useAuth } from '../src/context/AuthContext';
+import ApprovalControls from './ApprovalControls';
+import StatusBadge from './StatusBadge';
 
 // For PDF generation
 declare var html2pdf: any;
@@ -90,6 +93,15 @@ const INITIAL_PO: OrderSheet = {
 };
 
 const OrderSheetEditor: React.FC<OrderSheetEditorProps> = ({ project, onUpdate, onBack, onSave }) => {
+  const { userRole, user, profile } = useAuth();
+  const workflow = project.orderSheet?.workflow || createDefaultWorkflow();
+  const isLocked = workflow.status === 'SUBMITTED' || workflow.status === 'APPROVED';
+
+  const handleWorkflowChange = (wf: WorkflowFields) => {
+    const updatedSheet: OrderSheet = { ...(project.orderSheet || formData), workflow: wf };
+    onUpdate(updatedSheet);
+  };
+
   const [viewMode, setViewMode] = useState<'EDIT' | 'PREVIEW'>('EDIT');
   const [formData, setFormData] = useState<OrderSheet>(() => {
     const existing = project.orderSheet;
@@ -539,7 +551,7 @@ const OrderSheetEditor: React.FC<OrderSheetEditorProps> = ({ project, onUpdate, 
   };
 
   const sectionLabel = "text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 pl-1";
-  const inputClass = "w-full border p-3 text-sm bg-white focus:border-black outline-none font-normal text-black transition-all";
+  const inputClass = `w-full border p-3 text-sm focus:border-black outline-none font-normal text-black transition-all ${isLocked ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`;
   const previewBoxHeader = "bg-black text-white px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider";
 
   return (
@@ -554,21 +566,28 @@ const OrderSheetEditor: React.FC<OrderSheetEditorProps> = ({ project, onUpdate, 
               <ShoppingCart className="w-5 h-5" />
             </div>
             <div>
-              <h1 style={{ fontWeight: 700, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#000000' }}>Order Sheet (PO)</h1>
+              <div className="flex items-center gap-3">
+                <h1 style={{ fontWeight: 700, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#000000' }}>Order Sheet (PO)</h1>
+                <StatusBadge status={workflow.status} size="sm" />
+              </div>
               <div style={{ fontSize: '10px', fontWeight: 400, textTransform: 'uppercase', color: '#666666', letterSpacing: '0.5px', marginTop: '2px' }}>Purchase Order Management</div>
             </div>
           </div>
         </div>
         <div className="flex gap-2">
-          <button onClick={handleReset} className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase transition-all" style={{ border: '1px solid #D32F2F', color: '#D32F2F', backgroundColor: 'white' }}>
-            <RotateCcw className="w-3.5 h-3.5" /> Reset
-          </button>
+          {!isLocked && (
+            <button onClick={handleReset} className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase transition-all" style={{ border: '1px solid #D32F2F', color: '#D32F2F', backgroundColor: 'white' }}>
+              <RotateCcw className="w-3.5 h-3.5" /> Reset
+            </button>
+          )}
           <button onClick={() => setViewMode(viewMode === 'EDIT' ? 'PREVIEW' : 'EDIT')} className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase transition-all" style={{ border: '1px solid #000000', color: '#000000', backgroundColor: 'white' }}>
             {viewMode === 'EDIT' ? <Eye className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />} {viewMode === 'EDIT' ? 'Preview' : 'Edit'}
           </button>
-          <button onClick={handleSave} className="btn-primary flex items-center gap-2">
-            <Save className="w-4 h-4" /> SAVE
-          </button>
+          {!isLocked && (
+            <button onClick={handleSave} className="btn-primary flex items-center gap-2">
+              <Save className="w-4 h-4" /> SAVE
+            </button>
+          )}
         </div>
       </header>
 
@@ -604,7 +623,7 @@ const OrderSheetEditor: React.FC<OrderSheetEditorProps> = ({ project, onUpdate, 
                     <Plus className="w-3.5 h-3.5" /> Add PO
                   </button>
                 </div>
-                <div className="overflow-hidden border border-gray-200">
+                <div className="overflow-x-auto border border-gray-200">
                   <table className="w-full">
                     <thead className="bg-black text-white">
                       <tr className="text-[10px] font-bold uppercase tracking-wider">
@@ -1185,6 +1204,17 @@ const OrderSheetEditor: React.FC<OrderSheetEditorProps> = ({ project, onUpdate, 
             .page-break-inside-avoid { page-break-inside: avoid; }
         }
       `}</style>
+
+      {/* Approval Workflow Footer */}
+      <ApprovalControls
+        workflow={workflow}
+        onWorkflowChange={handleWorkflowChange}
+        onSave={handleSave}
+        userRole={userRole || 'viewer'}
+        userName={profile?.name || user?.fullName || 'User'}
+        userId={user?.id || ''}
+        sectionLabel="Order Sheet"
+      />
     </div >
   );
 };
