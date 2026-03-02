@@ -289,7 +289,7 @@ const InspectionEditor: React.FC<InspectionEditorProps> = ({ project, inspection
     };
 
     return (
-        <div className="flex flex-col h-screen bg-gray-50 print:bg-white">
+        <div className="flex flex-col h-full bg-gray-50 print:bg-white">
             <div className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm shrink-0 z-30 no-print">
                 <div className="flex items-center gap-4">
                     <button onClick={onBack} className="p-2.5 hover:bg-gray-100 transition-all"><ArrowLeft className="w-5 h-5 text-gray-600" /></button>

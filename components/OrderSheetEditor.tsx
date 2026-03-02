@@ -555,7 +555,7 @@ const OrderSheetEditor: React.FC<OrderSheetEditorProps> = ({ project, onUpdate, 
   const previewBoxHeader = "bg-black text-white px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider";
 
   return (
-    <div className="flex flex-col h-screen bg-white print:bg-white overflow-hidden" style={{ color: '#000000' }}>
+    <div className="flex flex-col h-full bg-white print:bg-white overflow-hidden" style={{ color: '#000000' }}>
       <header className="bg-white px-6 py-4 flex justify-between items-center shrink-0 z-30 no-print" style={{ borderBottom: '1px solid #E0E0E0' }}>
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="p-2 transition-all" style={{ color: '#000000' }}>

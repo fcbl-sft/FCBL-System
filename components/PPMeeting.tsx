@@ -310,7 +310,7 @@ const PPMeetingComponent: React.FC<PPMeetingProps> = ({ project, onUpdate, onBac
   const remarkClass = "w-full border border-gray-100 p-3 text-xs bg-[#DFEDF7] focus:bg-white transition-all min-h-[80px] resize-none outline-none font-medium";
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 print:bg-white">
+    <div className="flex flex-col h-full bg-gray-50 print:bg-white">
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm shrink-0 z-30 no-print">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="p-2.5 hover:bg-gray-100 transition-all">

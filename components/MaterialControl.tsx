@@ -274,7 +274,7 @@ const MaterialControl: React.FC<MaterialControlProps> = ({ project, onUpdateProj
   const cellInputClass = "w-full bg-[#DFEDF7] border-none focus:bg-white p-2 text-[11px] outline-none transition-colors placeholder:text-gray-300 font-medium";
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 print:bg-white">
+    <div className="flex flex-col h-full bg-gray-50 print:bg-white">
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm shrink-0 z-30 no-print">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="p-2.5 hover:bg-gray-100 transition-all">

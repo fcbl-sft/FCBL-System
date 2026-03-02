@@ -352,7 +352,7 @@ const StyleLayout: React.FC = () => {
             </nav>
 
             {/* CONTENT AREA - Renders nested routes */}
-            <main className="flex-grow overflow-hidden">
+            <main className="flex-grow overflow-auto">
                 <Outlet />
             </main>
 

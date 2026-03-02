@@ -550,7 +550,7 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
     };
 
     return (
-        <div className="flex h-screen w-full bg-white flex-col">
+        <div className="flex h-full w-full bg-white flex-col">
             {/* Top Bar - Inditex style */}
             <div className="h-14 bg-white flex justify-between items-center px-6 shrink-0 z-30" style={{ borderBottom: '1px solid #E0E0E0' }}>
                 <div className="flex items-center gap-4">

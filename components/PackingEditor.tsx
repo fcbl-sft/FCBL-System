@@ -321,7 +321,7 @@ const PackingEditor: React.FC<PackingEditorProps> = ({ project, onUpdate, onBack
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 print:bg-white overflow-hidden">
+    <div className="flex flex-col h-full bg-gray-50 print:bg-white overflow-hidden">
       {/* HEADER */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm shrink-0 z-30 no-print">
         <div className="flex items-center gap-4">

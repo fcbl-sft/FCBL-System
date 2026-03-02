@@ -21,7 +21,7 @@ const DashboardPage: React.FC = () => {
     const userName = profile?.name || profile?.email || 'User';
 
     const handleSelectProject = (project: Project) => {
-        navigate(ROUTES.TECH_PACK(project.id));
+        navigate(`/styles/${project.id}`);
     };
 
     const handleCreateTechPack = () => {
