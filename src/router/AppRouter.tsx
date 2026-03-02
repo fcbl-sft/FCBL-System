@@ -36,7 +36,14 @@ import InvoiceContent from '../pages/InvoiceContent';
 import PackingContent from '../pages/PackingContent';
 import InlinePhaseContent from '../pages/InlinePhaseContent';
 
+// Section access guard for nested routes
+import SectionGuard from '../components/SectionGuard';
+import { AccessDenied } from './ProtectedRoute';
+
 const AppRouter: React.FC = () => {
+    // Fallback for denied nested route access
+    const accessDeniedFallback = <AccessDenied message="You don't have permission to access this section." />;
+
     return (
         <Routes>
             {/* Public routes */}
@@ -110,15 +117,33 @@ const AppRouter: React.FC = () => {
                 <ProtectedRoute><StyleLayout /></ProtectedRoute>
             }>
                 {/* Default tab = Summary */}
-                <Route index element={<SummaryContent />} />
-                <Route path="tech-pack" element={<TechPackContent />} />
-                <Route path="order-sheet" element={<OrderSheetContent />} />
-                <Route path="consumption" element={<ConsumptionContent />} />
-                <Route path="pp-meeting" element={<PPMeetingContent />} />
-                <Route path="materials" element={<MaterialsContent />} />
-                <Route path="inline-phase" element={<InlinePhaseContent />} />
-                <Route path="documents/invoice" element={<InvoiceContent />} />
-                <Route path="documents/packing" element={<PackingContent />} />
+                <Route index element={
+                    <SectionGuard section="summary" fallback={accessDeniedFallback}><SummaryContent /></SectionGuard>
+                } />
+                <Route path="tech-pack" element={
+                    <SectionGuard section="tech_pack" fallback={accessDeniedFallback}><TechPackContent /></SectionGuard>
+                } />
+                <Route path="order-sheet" element={
+                    <SectionGuard section="order_sheet" fallback={accessDeniedFallback}><OrderSheetContent /></SectionGuard>
+                } />
+                <Route path="consumption" element={
+                    <SectionGuard section="consumption" fallback={accessDeniedFallback}><ConsumptionContent /></SectionGuard>
+                } />
+                <Route path="pp-meeting" element={
+                    <SectionGuard section="pp_meeting" fallback={accessDeniedFallback}><PPMeetingContent /></SectionGuard>
+                } />
+                <Route path="materials" element={
+                    <SectionGuard section="mq_control" fallback={accessDeniedFallback}><MaterialsContent /></SectionGuard>
+                } />
+                <Route path="inline-phase" element={
+                    <SectionGuard section="qc_inspect" fallback={accessDeniedFallback}><InlinePhaseContent /></SectionGuard>
+                } />
+                <Route path="documents/invoice" element={
+                    <SectionGuard section="commercial" fallback={accessDeniedFallback}><InvoiceContent /></SectionGuard>
+                } />
+                <Route path="documents/packing" element={
+                    <SectionGuard section="commercial" fallback={accessDeniedFallback}><PackingContent /></SectionGuard>
+                } />
             </Route>
 
             {/* 404 fallback */}

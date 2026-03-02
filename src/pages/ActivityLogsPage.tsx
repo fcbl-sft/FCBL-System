@@ -38,7 +38,7 @@ const ActivityLogsPage: React.FC = () => {
             const { data, error } = await supabase
                 .from('login_activity')
                 .select('*')
-                .order('timestamp', { ascending: false })
+                .order('created_at', { ascending: false })
                 .limit(100);
 
             if (error) throw error;
@@ -208,7 +208,7 @@ const ActivityLogsPage: React.FC = () => {
                                 filteredLogs.map(log => (
                                     <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="px-4 py-3 text-sm text-gray-600">
-                                            {formatDate(log.timestamp)}
+                                            {formatDate(log.created_at)}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-900">
                                             {log.email}

@@ -81,16 +81,35 @@ export function validateEmail(email: string): boolean {
     return emailRegex.test(email);
 }
 
-// ================================================
-// USER MAPPING
-// ================================================
-
 function mapSupabaseUser(supabaseUser: any, profile?: UserProfile | null): User {
     const metadata = supabaseUser.user_metadata || {};
 
     // Use profile data if available, otherwise fall back to metadata
     const role: UserRole = profile?.role || (metadata.role as UserRole) || 'viewer';
-    const sectionAccess = profile?.section_access || DEFAULT_ROLE_ACCESS[role];
+
+    // Validate section_access from the profile:
+    // It MUST be a non-null object (not an array) with SectionId keys.
+    // If it's null, undefined, empty, or wrong format → use role defaults.
+    let sectionAccess = DEFAULT_ROLE_ACCESS[role];
+    const rawAccess = profile?.section_access;
+
+    if (rawAccess && typeof rawAccess === 'object' && !Array.isArray(rawAccess)) {
+        // Check it has at least one valid SectionId key
+        const validKeys = ['dashboard', 'summary', 'tech_pack', 'order_sheet', 'consumption', 'pp_meeting', 'mq_control', 'commercial', 'qc_inspect', 'user_management', 'role_management'];
+        const hasValidKey = Object.keys(rawAccess).some(k => validKeys.includes(k));
+        if (hasValidKey) {
+            sectionAccess = rawAccess;
+        }
+    }
+
+    // Debug logging — visible in browser console to help diagnose permission issues
+    console.log('[Auth] Profile loaded:', {
+        email: supabaseUser.email,
+        role,
+        profileSectionAccess: rawAccess,
+        effectiveSectionAccess: sectionAccess,
+        usingDefaults: sectionAccess === DEFAULT_ROLE_ACCESS[role],
+    });
 
     return {
         id: supabaseUser.id,
@@ -200,7 +219,7 @@ async function logLoginActivity(
             status,
             ip_address: null, // Would need server-side to get real IP
             user_agent: navigator.userAgent,
-            timestamp: new Date().toISOString(),
+            created_at: new Date().toISOString(),
         });
     } catch (err) {
         console.error('Failed to log login activity:', err);
@@ -569,7 +588,7 @@ export async function getLoginActivity(limit: number = 100): Promise<LoginActivi
         const { data, error } = await supabase
             .from('login_activity')
             .select('*')
-            .order('timestamp', { ascending: false })
+            .order('created_at', { ascending: false })
             .limit(limit);
 
         if (error) return [];

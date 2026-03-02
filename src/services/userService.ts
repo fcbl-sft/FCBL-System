@@ -4,7 +4,6 @@
 import { supabase } from '../../lib/supabase';
 import { UserProfile, UserRole, SectionAccessMap } from '../../types';
 import { DEFAULT_ROLE_ACCESS } from '../constants/permissionConstants';
-import api from './api';
 
 export interface CreateUserData {
     email: string;
@@ -158,7 +157,8 @@ export async function createUser(userData: CreateUserData): Promise<{ user: User
 
 /**
  * Update an existing user (Admin only)
- * Calls the backend API which uses service role key to bypass RLS.
+ * Uses Supabase RPC function (update_user_profile) with SECURITY DEFINER
+ * to bypass RLS — no backend API needed.
  */
 export async function updateUser(
     userId: string,
@@ -180,15 +180,21 @@ export async function updateUser(
         if (updates.phone !== undefined) payload.phone = updates.phone;
         if (updates.profile_photo_url !== undefined) payload.profile_photo_url = updates.profile_photo_url;
 
-        // Use backend endpoint which has service role access (bypasses RLS)
-        const response = await api.patch<{ success: boolean; error: string | null }>(
-            `/users/${userId}`,
-            payload
-        );
+        // Call Supabase RPC function (bypasses RLS via SECURITY DEFINER)
+        const { data, error } = await supabase.rpc('update_user_profile', {
+            target_user_id: userId,
+            updates: payload,
+        });
 
-        if (response.error) {
-            console.error('Update user error from backend:', response.error);
-            return { success: false, error: response.error };
+        if (error) {
+            console.error('Update user RPC error:', error);
+            return { success: false, error: error.message };
+        }
+
+        // The RPC returns { success, error } as JSONB
+        const result = data as { success: boolean; error: string | null } | null;
+        if (result && !result.success) {
+            return { success: false, error: result.error || 'Update failed' };
         }
 
         return { success: true, error: null };

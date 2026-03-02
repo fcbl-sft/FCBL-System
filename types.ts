@@ -104,7 +104,7 @@ export interface LoginActivity {
   status: 'success' | 'failed' | 'locked';
   ip_address?: string;
   user_agent?: string;
-  timestamp: string;
+  created_at: string;
 }
 
 // Account lockout tracking

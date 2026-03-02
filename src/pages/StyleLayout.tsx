@@ -6,6 +6,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { ArrowLeft, FileText, ShoppingCart, Scale, Users, Package, FileBox, ClipboardCheck, Edit3, Trash2, Home, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { hasAccess } from '../constants/permissionConstants';
+import { SectionId } from '../../types';
 import { useProjects } from '../context/ProjectContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -28,7 +30,7 @@ const StyleLayout: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const location = useLocation();
-    const { userRole } = useAuth();
+    const { userRole, sectionAccess } = useAuth();
     const { getProject, updateProject, deleteProject } = useProjects();
 
     // Modal state
@@ -77,6 +79,24 @@ const StyleLayout: React.FC = () => {
         { id: 'commercial', label: 'Commercial', icon: FileBox, path: `/styles/${id}/documents/invoice` },
         { id: 'qc-inspect', label: 'QC Inspect', icon: ClipboardCheck, path: `/styles/${id}/inline-phase` },
     ];
+
+    // Map tab IDs to SectionId for access control
+    const TAB_SECTION_MAP: Record<TabId, SectionId> = {
+        'summary': 'summary',
+        'tech-pack': 'tech_pack',
+        'order-sheet': 'order_sheet',
+        'consumption': 'consumption',
+        'pp-meeting': 'pp_meeting',
+        'mq-control': 'mq_control',
+        'commercial': 'commercial',
+        'qc-inspect': 'qc_inspect',
+    };
+
+    // Filter tabs based on user's section access
+    const visibleTabs = TABS.filter(tab => {
+        const sectionId = TAB_SECTION_MAP[tab.id];
+        return hasAccess(sectionAccess || undefined, sectionId, 'view');
+    });
 
     // Derive active tab from current URL path
     const getActiveTabFromPath = (): TabId => {
@@ -198,7 +218,7 @@ const StyleLayout: React.FC = () => {
 
             {/* PERSISTENT TAB NAVIGATION */}
             <nav className="bg-white px-6 flex justify-center gap-0 shrink-0" style={{ borderBottom: '1px solid #E0E0E0', overflow: 'visible' }}>
-                {TABS.map(tab => {
+                {visibleTabs.map(tab => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
 
