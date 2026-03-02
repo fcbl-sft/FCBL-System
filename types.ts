@@ -644,6 +644,7 @@ export interface Project {
   productImage?: string;  // Product thumbnail URL for dashboard cards
   productColors?: ProductColor[];  // Color swatches for card display
   poNumbers: PONumber[];
+  createdAt?: string;  // Creation timestamp (for NEW badge)
   updatedAt: string;
   status: ProjectStatus;
   techPackFiles: UploadedTechPack[];
@@ -662,5 +663,42 @@ export interface Project {
   // Workflow fields for sections stored at project level
   techPackWorkflow?: WorkflowFields;
   mqControlWorkflow?: WorkflowFields;
+  ppMeetingWorkflow?: WorkflowFields;
+  commercialWorkflow?: WorkflowFields;
+  qcInspectWorkflow?: WorkflowFields;
+  orderSheetWorkflow?: WorkflowFields;
+  consumptionWorkflow?: WorkflowFields;
+  packingWorkflow?: WorkflowFields;
+}
+
+/**
+ * Count the number of sections with SUBMITTED (pending approval) status.
+ * Checks both project-level workflow fields and nested section workflow objects.
+ */
+export function getPendingTaskCount(project: Project): number {
+  let count = 0;
+  // Project-level workflow fields
+  if (project.techPackWorkflow?.status === 'SUBMITTED') count++;
+  if (project.mqControlWorkflow?.status === 'SUBMITTED') count++;
+  if (project.ppMeetingWorkflow?.status === 'SUBMITTED') count++;
+  if (project.commercialWorkflow?.status === 'SUBMITTED') count++;
+  if (project.qcInspectWorkflow?.status === 'SUBMITTED') count++;
+  if (project.orderSheetWorkflow?.status === 'SUBMITTED') count++;
+  if (project.consumptionWorkflow?.status === 'SUBMITTED') count++;
+  if (project.packingWorkflow?.status === 'SUBMITTED') count++;
+  // Nested section workflow objects (fallback / alternate storage)
+  if (project.orderSheet?.workflow?.status === 'SUBMITTED') count++;
+  if (project.consumption?.workflow?.status === 'SUBMITTED') count++;
+  if (project.packing?.workflow?.status === 'SUBMITTED') count++;
+  // PP Meetings (check latest)
+  const latestPPM = project.ppMeetings?.[project.ppMeetings.length - 1];
+  if (latestPPM?.workflow?.status === 'SUBMITTED') count++;
+  // Invoices (check latest)
+  const latestInv = project.invoices?.[project.invoices.length - 1];
+  if (latestInv?.workflow?.status === 'SUBMITTED') count++;
+  // Inspections (check latest)
+  const latestInsp = project.inspections?.[project.inspections.length - 1];
+  if (latestInsp?.workflow?.status === 'SUBMITTED') count++;
+  return count;
 }
 

@@ -99,6 +99,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
                 title: data.title || 'New Style',
                 poNumbers: data.poNumbers || [{ id: `po-${Date.now()}`, number: 'N/A' }],
                 status: 'DRAFT',
+                createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
                 techPackFiles: data.techPackFiles || [],
                 pages: data.pages || initialPages,

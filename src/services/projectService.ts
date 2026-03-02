@@ -30,6 +30,7 @@ const mapFromDb = (row: any): Project => ({
     productImage: row.product_image || undefined,
     productColors: row.product_colors || [],
     poNumbers: normalizePONumbers(row.po_numbers),
+    createdAt: row.created_at || undefined,
     status: row.status,
     updatedAt: row.updated_at,
     techPackFiles: row.tech_pack_files || [],
@@ -47,6 +48,12 @@ const mapFromDb = (row: any): Project => ({
     materialComments: row.material_comments || [],
     techPackWorkflow: row.tech_pack_workflow || undefined,
     mqControlWorkflow: row.mq_control_workflow || undefined,
+    ppMeetingWorkflow: row.pp_meeting_workflow || undefined,
+    commercialWorkflow: row.commercial_workflow || undefined,
+    qcInspectWorkflow: row.qc_inspect_workflow || undefined,
+    orderSheetWorkflow: row.order_sheet_workflow || undefined,
+    consumptionWorkflow: row.consumption_workflow || undefined,
+    packingWorkflow: row.packing_workflow || undefined,
 });
 
 /**
@@ -56,6 +63,7 @@ const mapToDb = (proj: Partial<Project>): Record<string, any> => {
     const mapping: Record<string, string> = {
         factoryName: 'factory_name',
         poNumbers: 'po_numbers',
+        createdAt: 'created_at',
         updatedAt: 'updated_at',
         techPackFiles: 'tech_pack_files',
         ppMeetings: 'pp_meetings',
@@ -68,6 +76,13 @@ const mapToDb = (proj: Partial<Project>): Record<string, any> => {
         productColors: 'product_colors',
         techPackWorkflow: 'tech_pack_workflow',
         mqControlWorkflow: 'mq_control_workflow',
+        ppMeetingWorkflow: 'pp_meeting_workflow',
+        commercialWorkflow: 'commercial_workflow',
+        qcInspectWorkflow: 'qc_inspect_workflow',
+        orderSheetWorkflow: 'order_sheet_workflow',
+        consumptionWorkflow: 'consumption_workflow',
+        packingWorkflow: 'packing_workflow',
+        mainStatus: 'main_status',
     };
 
     const result: Record<string, any> = {};

@@ -126,7 +126,9 @@ const UserFormPage: React.FC = () => {
                     role: formData.role,
                     phone: formData.phone || undefined,
                     factory_id: formData.factory_id || undefined,
-                    section_access: useCustomAccess ? sectionAccess : undefined,
+                    // Always send section_access - sectionAccess state always reflects current values
+                    // (either role defaults or custom overrides, kept in sync via useEffect)
+                    section_access: sectionAccess,
                 });
 
                 if (result.success) {

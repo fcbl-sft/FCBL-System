@@ -47,6 +47,9 @@ const SUPER_ADMIN_CREDENTIALS = {
 // Session activity storage key
 const LAST_ACTIVITY_KEY = 'fcbl_last_activity';
 
+// Super admin session cache key (persists across reloads)
+const SUPER_ADMIN_SESSION_KEY = 'fcbl_super_admin_session';
+
 // ================================================
 // VALIDATION FUNCTIONS
 // ================================================
@@ -283,17 +286,22 @@ export async function signIn(email: string, password: string): Promise<SignInRes
 
         const superAdminAccess = DEFAULT_ROLE_ACCESS['super_admin'];
 
+        const superAdminUser: User = {
+            id: 'super-admin-001',
+            email: SUPER_ADMIN_CREDENTIALS.email,
+            fullName: 'Super Admin',
+            role: 'super_admin',
+            emailVerified: true,
+            createdAt: new Date().toISOString(),
+            lastLoginAt: new Date().toISOString(),
+            sectionAccess: superAdminAccess,
+        };
+
+        // Persist super admin session to localStorage so it survives page reloads
+        localStorage.setItem(SUPER_ADMIN_SESSION_KEY, JSON.stringify(superAdminUser));
+
         return {
-            user: {
-                id: 'super-admin-001',
-                email: SUPER_ADMIN_CREDENTIALS.email,
-                fullName: 'Super Admin',
-                role: 'super_admin',
-                emailVerified: true,
-                createdAt: new Date().toISOString(),
-                lastLoginAt: new Date().toISOString(),
-                sectionAccess: superAdminAccess,
-            },
+            user: superAdminUser,
             error: null,
         };
     }
@@ -374,6 +382,8 @@ export async function signIn(email: string, password: string): Promise<SignInRes
 export async function signOut(): Promise<{ error: string | null }> {
     try {
         clearSessionActivity();
+        // Clear super admin session cache on logout
+        localStorage.removeItem(SUPER_ADMIN_SESSION_KEY);
         const { error } = await supabase.auth.signOut();
         if (error) {
             return { error: error.message };
@@ -385,15 +395,42 @@ export async function signOut(): Promise<{ error: string | null }> {
     }
 }
 
-export async function getCurrentUser(): Promise<User | null> {
+/**
+ * Restore super admin session from localStorage (instant, no network call).
+ * Returns the cached super admin user or null.
+ */
+export function getSuperAdminFromCache(): User | null {
     try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return null;
+        const cached = localStorage.getItem(SUPER_ADMIN_SESSION_KEY);
+        if (cached) {
+            return JSON.parse(cached) as User;
+        }
+    } catch {
+        localStorage.removeItem(SUPER_ADMIN_SESSION_KEY);
+    }
+    return null;
+}
 
-        // Fetch profile
-        const profile = await getProfile(user.id);
+export async function getCurrentUser(): Promise<User | null> {
+    // First check for super admin cached session (instant, no network)
+    const superAdmin = getSuperAdminFromCache();
+    if (superAdmin) {
+        return superAdmin;
+    }
 
-        return mapSupabaseUser(user, profile);
+    try {
+        // Use getSession() — reads from localStorage, no network call needed
+        // This is much faster than getUser() which validates via network
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError || !session?.user) {
+            return null;
+        }
+
+        // Fetch profile (can be done in background; use cached metadata as fallback)
+        const profile = await getProfile(session.user.id);
+
+        return mapSupabaseUser(session.user, profile);
     } catch (err: any) {
         if (err.name === 'AbortError' || err.message?.includes('AbortError')) return null;
         console.error('Get current user error:', err);
@@ -454,7 +491,16 @@ export async function updatePassword(newPassword: string): Promise<{ error: stri
 
 export function onAuthStateChange(callback: (user: User | null) => void) {
     return supabase.auth.onAuthStateChange(async (event, session) => {
+        // On sign out, also clear super admin cache
+        if (event === 'SIGNED_OUT') {
+            localStorage.removeItem(SUPER_ADMIN_SESSION_KEY);
+            callback(null);
+            return;
+        }
+
         if (session?.user) {
+            // For INITIAL_SESSION event, use quick session-based restore
+            // Profile fetch happens async; mapSupabaseUser uses session metadata as fallback
             const profile = await getProfile(session.user.id);
             callback(mapSupabaseUser(session.user, profile));
         } else {

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Edit3, Trash2 } from 'lucide-react';
-import { Project, ProjectStatus, MainStatus, ProductionStage } from '../types';
+import { Edit3, Trash2, ChevronRight } from 'lucide-react';
+import { Project, ProjectStatus, MainStatus, ProductionStage, getPendingTaskCount } from '../types';
 
 interface StyleCardProps {
     project: Project;
@@ -44,7 +44,8 @@ const StyleCard: React.FC<StyleCardProps> = ({ project, onClick, onEdit, onDelet
     // Is this a new project? (created within last 7 days)
     const isNew = () => {
         try {
-            const created = new Date(project.updatedAt);
+            const dateStr = project.createdAt || project.updatedAt;
+            const created = new Date(dateStr);
             const now = new Date();
             const diffDays = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
             return diffDays < 7;
@@ -52,6 +53,9 @@ const StyleCard: React.FC<StyleCardProps> = ({ project, onClick, onEdit, onDelet
             return false;
         }
     };
+
+    // Count pending approval tasks
+    const pendingCount = getPendingTaskCount(project);
 
     // Auto-detect current production stage
     const getProjectStage = (): ProductionStage | null => {
@@ -110,7 +114,7 @@ const StyleCard: React.FC<StyleCardProps> = ({ project, onClick, onEdit, onDelet
 
                 {/* Hover Overlay with Edit/Delete Buttons */}
                 {(onEdit || onDelete) && (
-                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ zIndex: 2 }}>
                         {onEdit && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); onEdit(e); }}
@@ -132,13 +136,41 @@ const StyleCard: React.FC<StyleCardProps> = ({ project, onClick, onEdit, onDelet
                     </div>
                 )}
 
-                {/* NEW Badge */}
+                {/* NEW Badge - Top Left, Red */}
                 {isNew() && (
                     <div
-                        className="absolute bottom-2 left-2 bg-white px-1.5 py-0.5"
-                        style={{ fontSize: '9px', fontWeight: 700 }}
+                        className="absolute top-0 left-0"
+                        style={{
+                            backgroundColor: '#E53935',
+                            color: '#FFFFFF',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            padding: '4px 10px',
+                            zIndex: 1
+                        }}
                     >
                         NEW
+                    </div>
+                )}
+
+                {/* Pending Tasks Hover Banner - Orange */}
+                {pendingCount > 0 && (
+                    <div
+                        className="absolute left-0 right-0 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{
+                            top: isNew() ? '28px' : '0px',
+                            backgroundColor: 'rgba(245, 166, 35, 0.95)',
+                            color: '#FFFFFF',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            padding: '8px 12px',
+                            zIndex: 1
+                        }}
+                    >
+                        <span>{pendingCount} pending {pendingCount === 1 ? 'task' : 'tasks'}</span>
+                        <ChevronRight className="w-4 h-4" />
                     </div>
                 )}
             </div>

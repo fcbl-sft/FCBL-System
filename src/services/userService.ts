@@ -4,6 +4,7 @@
 import { supabase } from '../../lib/supabase';
 import { UserProfile, UserRole, SectionAccessMap } from '../../types';
 import { DEFAULT_ROLE_ACCESS } from '../constants/permissionConstants';
+import api from './api';
 
 export interface CreateUserData {
     email: string;
@@ -157,41 +158,37 @@ export async function createUser(userData: CreateUserData): Promise<{ user: User
 
 /**
  * Update an existing user (Admin only)
+ * Calls the backend API which uses service role key to bypass RLS.
  */
 export async function updateUser(
     userId: string,
     updates: UpdateUserData
 ): Promise<{ success: boolean; error: string | null }> {
     try {
-        // If role changed, update section access to role defaults (unless custom access provided)
+        // If role changed and no section_access override, apply role defaults
         let sectionAccess = updates.section_access;
         if (updates.role && !sectionAccess) {
-            // Get current profile to merge with new role defaults
-            const currentProfile = await getUser(userId);
-            if (currentProfile) {
-                sectionAccess = DEFAULT_ROLE_ACCESS[updates.role];
-            }
+            sectionAccess = DEFAULT_ROLE_ACCESS[updates.role];
         }
 
-        const updateData: any = {
-            updated_at: new Date().toISOString(),
-        };
+        const payload: Record<string, unknown> = {};
+        if (updates.name !== undefined) payload.name = updates.name;
+        if (updates.role !== undefined) payload.role = updates.role;
+        if (updates.factory_id !== undefined) payload.factory_id = updates.factory_id;
+        if (sectionAccess !== undefined) payload.section_access = sectionAccess;
+        if (updates.is_active !== undefined) payload.is_active = updates.is_active;
+        if (updates.phone !== undefined) payload.phone = updates.phone;
+        if (updates.profile_photo_url !== undefined) payload.profile_photo_url = updates.profile_photo_url;
 
-        if (updates.name !== undefined) updateData.name = updates.name;
-        if (updates.role !== undefined) updateData.role = updates.role;
-        if (updates.factory_id !== undefined) updateData.factory_id = updates.factory_id;
-        if (sectionAccess !== undefined) updateData.section_access = sectionAccess;
-        if (updates.is_active !== undefined) updateData.is_active = updates.is_active;
-        if (updates.phone !== undefined) updateData.phone = updates.phone;
-        if (updates.profile_photo_url !== undefined) updateData.profile_photo_url = updates.profile_photo_url;
+        // Use backend endpoint which has service role access (bypasses RLS)
+        const response = await api.patch<{ success: boolean; error: string | null }>(
+            `/users/${userId}`,
+            payload
+        );
 
-        const { error } = await supabase
-            .from('profiles')
-            .update(updateData)
-            .eq('id', userId);
-
-        if (error) {
-            return { success: false, error: error.message };
+        if (response.error) {
+            console.error('Update user error from backend:', response.error);
+            return { success: false, error: response.error };
         }
 
         return { success: true, error: null };

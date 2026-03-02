@@ -1,10 +1,9 @@
-
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 /**
- * DIRECT SUPABASE CLIENT
- * Reverted to direct connection to fix 404 File Not Found errors on /api/projects.
- * Using the provided project credentials.
+ * SUPABASE SINGLETON CLIENT
+ * Single instance reused across all imports.
+ * Configured with auto-refresh and session persistence to prevent stale token issues.
  */
 
 const supabaseUrl = 'https://zilbigcueizkfvvpuwjp.supabase.co';
@@ -14,4 +13,22 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Supabase configuration is missing.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Singleton pattern: only one GoTrueClient instance is ever created
+let _supabaseInstance: SupabaseClient | null = null;
+
+function getSupabaseClient(): SupabaseClient {
+  if (_supabaseInstance) return _supabaseInstance;
+
+  _supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,       // Store session in localStorage across tabs/reloads
+      autoRefreshToken: true,     // Automatically refresh token before expiry
+      detectSessionInUrl: true,   // Handle password-reset/magic-link deep links
+      storageKey: 'fcbl-auth',    // Unique key to avoid conflicts with other apps
+    },
+  });
+
+  return _supabaseInstance;
+}
+
+export const supabase = getSupabaseClient();

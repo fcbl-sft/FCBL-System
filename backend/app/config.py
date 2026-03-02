@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     # Supabase Configuration
     supabase_url: str = "https://zilbigcueizkfvvpuwjp.supabase.co"
     supabase_anon_key: str = "sb_publishable_uSaP-URx2fUnvoWgMrL7-g_zEnamxgY"
+    # Service role key - bypasses RLS (keep secret, server-side only)
+    supabase_service_role_key: str = ""
     
     # Google AI Configuration
     google_api_key: str = ""
