@@ -161,7 +161,7 @@ const SummaryContent: React.FC = () => {
             status: 'APPROVED',
             approvedBy: profile?.name || user?.fullName || 'Admin',
             approvedAt: new Date().toISOString(),
-            history: [...wf.history, {
+            history: [...(wf.history || []), {
                 id: `action-${Date.now()}`,
                 action: 'APPROVE',
                 userId: user?.id || '',
@@ -184,7 +184,7 @@ const SummaryContent: React.FC = () => {
             rejectionComment: rejectComment.trim(),
             approvedBy: undefined,
             approvedAt: undefined,
-            history: [...wf.history, {
+            history: [...(wf.history || []), {
                 id: `action-${Date.now()}`,
                 action: 'REJECT',
                 userId: user?.id || '',

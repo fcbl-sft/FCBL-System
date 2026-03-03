@@ -63,7 +63,6 @@ const mapToDb = (proj: Partial<Project>): Record<string, any> => {
     const mapping: Record<string, string> = {
         factoryName: 'factory_name',
         poNumbers: 'po_numbers',
-        createdAt: 'created_at',
         updatedAt: 'updated_at',
         techPackFiles: 'tech_pack_files',
         ppMeetings: 'pp_meetings',

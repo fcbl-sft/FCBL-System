@@ -136,37 +136,36 @@ const StyleCard: React.FC<StyleCardProps> = ({ project, onClick, onEdit, onDelet
                     </div>
                 )}
 
-                {/* NEW Badge - Top Left, Red */}
+                {/* NEW Badge - Top Left, FCBL Green */}
                 {isNew() && (
                     <div
                         className="absolute top-0 left-0"
                         style={{
-                            backgroundColor: '#E53935',
+                            backgroundColor: '#4CAF50',
                             color: '#FFFFFF',
                             fontSize: '10px',
                             fontWeight: 700,
                             textTransform: 'uppercase',
                             letterSpacing: '0.5px',
                             padding: '4px 10px',
-                            zIndex: 1
+                            zIndex: 2
                         }}
                     >
                         NEW
                     </div>
                 )}
 
-                {/* Pending Tasks Hover Banner - Orange */}
+                {/* Pending Tasks Banner - FCBL Green, full-width top edge, appears on hover overlaying NEW badge */}
                 {pendingCount > 0 && (
                     <div
-                        className="absolute left-0 right-0 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute left-0 right-0 top-0 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out"
                         style={{
-                            top: isNew() ? '28px' : '0px',
-                            backgroundColor: 'rgba(245, 166, 35, 0.95)',
+                            backgroundColor: 'rgba(76, 175, 80, 0.95)',
                             color: '#FFFFFF',
                             fontSize: '12px',
                             fontWeight: 600,
                             padding: '8px 12px',
-                            zIndex: 1
+                            zIndex: 3,
                         }}
                     >
                         <span>{pendingCount} pending {pendingCount === 1 ? 'task' : 'tasks'}</span>

@@ -55,7 +55,7 @@ const ApprovalControls: React.FC<ApprovalControlsProps> = ({
             rejectedBy: undefined,
             rejectedAt: undefined,
             rejectionComment: undefined,
-            history: [...workflow.history, createAction('SUBMIT')],
+            history: [...(workflow.history || []), createAction('SUBMIT')],
         };
         onWorkflowChange(updated);
         setShowConfirmSubmit(false);
@@ -67,7 +67,7 @@ const ApprovalControls: React.FC<ApprovalControlsProps> = ({
             status: 'DRAFT',
             submittedBy: undefined,
             submittedAt: undefined,
-            history: [...workflow.history, createAction('RECALL')],
+            history: [...(workflow.history || []), createAction('RECALL')],
         };
         onWorkflowChange(updated);
     };
@@ -78,7 +78,7 @@ const ApprovalControls: React.FC<ApprovalControlsProps> = ({
             status: 'APPROVED',
             approvedBy: userName,
             approvedAt: new Date().toISOString(),
-            history: [...workflow.history, createAction('APPROVE')],
+            history: [...(workflow.history || []), createAction('APPROVE')],
         };
         onWorkflowChange(updated);
     };
@@ -93,7 +93,7 @@ const ApprovalControls: React.FC<ApprovalControlsProps> = ({
             rejectionComment: rejectionComment.trim(),
             approvedBy: undefined,
             approvedAt: undefined,
-            history: [...workflow.history, createAction('REJECT', rejectionComment.trim())],
+            history: [...(workflow.history || []), createAction('REJECT', rejectionComment.trim())],
         };
         onWorkflowChange(updated);
         setShowRejectModal(false);
@@ -106,7 +106,7 @@ const ApprovalControls: React.FC<ApprovalControlsProps> = ({
             status: 'DRAFT',
             approvedBy: undefined,
             approvedAt: undefined,
-            history: [...workflow.history, createAction('REQUEST_REVISION')],
+            history: [...(workflow.history || []), createAction('REQUEST_REVISION')],
         };
         onWorkflowChange(updated);
     };
