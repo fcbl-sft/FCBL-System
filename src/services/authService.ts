@@ -374,7 +374,8 @@ export async function signIn(email: string, password: string): Promise<SignInRes
 
         // Check if user is active
         if (profile && !profile.is_active) {
-            await supabase.auth.signOut();
+            // NEVER call automatic signOut!
+            // await supabase.auth.signOut();
             await logLoginActivity(email, 'failed', data.user.id);
             return {
                 user: null,

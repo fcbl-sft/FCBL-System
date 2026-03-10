@@ -79,7 +79,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const handleSessionTimeout = useCallback(async () => {
         console.log('Session timeout - auto logout');
-        await authService.signOut();
+        // DON'T call signOut() automatically!
+        // await authService.signOut();
         setUser(null);
         setError('Your session has expired. Please sign in again.');
     }, []);
