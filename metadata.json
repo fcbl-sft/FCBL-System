@@ -1,0 +1,5 @@
+{
+  "name": "Final-07-vercel-window-finalComment-OrderSheet",
+  "description": "Professional garment specification sheet generator with AI-powered autofill and standard industry layouts.",
+  "requestFramePermissions": ["http://localhost:3000"]
+}
