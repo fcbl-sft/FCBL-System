@@ -1,11 +1,13 @@
 /**
- * Auth Context - Manages user authentication state with Supabase Auth
- * Includes: profile data, section permissions, session timeout
+ * Auth Context - Minimal Implementation with Emergency Bypass
+ * Simple, reliable auth flow relying entirely on Supabase.
+ * No timeouts, no aborts, no artificial lockouts.
+ * Renders instantly using cached localStorage data.
  */
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User, UserRole, UserProfile, SectionId, SectionAccessLevel, SectionAccessMap } from '../../types';
 import * as authService from '../services/authService';
-import { getSuperAdminFromCache, getSessionUserSync, clearAllAuthStorage } from '../services/authService';
+import { supabase } from '../../lib/supabase';
 import { DEFAULT_ROLE_ACCESS, hasAccess, isViewOnly, canManageUsers, canManageRoles } from '../constants/permissionConstants';
 
 // ================================================
@@ -13,25 +15,18 @@ import { DEFAULT_ROLE_ACCESS, hasAccess, isViewOnly, canManageUsers, canManageRo
 // ================================================
 
 interface AuthContextType {
-    // User state
     user: User | null;
     profile: UserProfile | null;
     userRole: UserRole | null;
     sectionAccess: SectionAccessMap | null;
-
-    // Auth state
     isAuthenticated: boolean;
     isLoading: boolean;
     error: string | null;
-
-    // Permission checks
     hasAccess: (section: SectionId, requiredLevel?: SectionAccessLevel) => boolean;
     isViewOnly: (section: SectionId) => boolean;
     canManageUsers: boolean;
     canManageRoles: boolean;
-
-    // Actions
-    signIn: (email: string, password: string) => Promise<{ success: boolean; locked?: boolean; lockoutMinutes?: number }>;
+    signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
     signOut: () => Promise<void>;
     resetPassword: (email: string) => Promise<{ success: boolean; error: string | null }>;
     refreshProfile: () => Promise<void>;
@@ -40,33 +35,53 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Session timeout interval (check every minute)
-const SESSION_CHECK_INTERVAL = 60 * 1000; // 1 minute
+// ================================================
+// LOCAL STORAGE CACHE HELPERS
+// ================================================
+
+// Attempt to instantly read the cached Supabase user object from localStorage
+const getCachedUser = (): User | null => {
+    try {
+        const stored = localStorage.getItem('fcbl-auth');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            const rawUser = parsed?.user;
+            if (rawUser) {
+                // Return a minimal user object constructed from the cached session
+                const metadata = rawUser.user_metadata || {};
+                const role: UserRole = (metadata.role as UserRole) || 'viewer';
+                const sectionAccess = DEFAULT_ROLE_ACCESS[role];
+
+                return {
+                    id: rawUser.id,
+                    email: rawUser.email || '',
+                    fullName: metadata.full_name || metadata.fullName || rawUser.email?.split('@')[0] || '',
+                    role,
+                    factoryName: metadata.factory_name || metadata.factoryName,
+                    emailVerified: !!rawUser.email_confirmed_at,
+                    createdAt: rawUser.created_at,
+                    lastLoginAt: rawUser.last_sign_in_at,
+                    sectionAccess,
+                };
+            }
+        }
+    } catch {
+        return null; // Fail silently on format errors
+    }
+    return null;
+};
 
 // ================================================
 // PROVIDER
 // ================================================
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    // ──────────────────────────────────────────────────────────
-    // INSTANT SESSION RESTORE
-    // Synchronously parse the JWT from localStorage to get a
-    // User object BEFORE any async work.  If found, the app
-    // renders immediately (loading=false).  The auth listener
-    // and initAuth will enrich with full profile in background.
-    // ──────────────────────────────────────────────────────────
-    const cachedUser = getSessionUserSync();   // sync, ~0ms, no network
-
-    const [user, setUser] = useState<User | null>(cachedUser);
-    // If we have a cached user (super admin or valid JWT), no loading needed.
-    // If no cached user but a raw session token exists, briefly show loading
-    // while Supabase auto-refreshes the token.
-    // If nothing at all, no loading — redirect to login.
-    const [isLoading, setIsLoading] = useState(!cachedUser && !!(() => {
-        try { return localStorage.getItem('fcbl-auth'); } catch { return null; }
-    })());
+    // 1. Instantly resolve user from cache
+    const [user, setUser] = useState<User | null>(() => getCachedUser());
+    
+    // 2. NEVER start with loading=true. This bypassing rendering blocks.
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
-    const sessionCheckRef = useRef<NodeJS.Timeout | null>(null);
 
     // Derived state
     const profile = user?.profile || null;
@@ -74,178 +89,63 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const sectionAccess = user?.sectionAccess || (userRole ? DEFAULT_ROLE_ACCESS[userRole] : null);
 
     // ================================================
-    // SESSION TIMEOUT HANDLING
-    // ================================================
-
-    const handleSessionTimeout = useCallback(async () => {
-        console.log('Session timeout - auto logout');
-        // DON'T call signOut() automatically!
-        // await authService.signOut();
-        setUser(null);
-        setError('Your session has expired. Please sign in again.');
-    }, []);
-
-    const startSessionCheck = useCallback(() => {
-        // Clear any existing interval
-        if (sessionCheckRef.current) {
-            clearInterval(sessionCheckRef.current);
-        }
-
-        // Start new interval
-        sessionCheckRef.current = setInterval(() => {
-            if (authService.hasSessionExpired()) {
-                handleSessionTimeout();
-            }
-        }, SESSION_CHECK_INTERVAL);
-    }, [handleSessionTimeout]);
-
-    const stopSessionCheck = useCallback(() => {
-        if (sessionCheckRef.current) {
-            clearInterval(sessionCheckRef.current);
-            sessionCheckRef.current = null;
-        }
-    }, []);
-
-    // Track user activity to reset session timeout
-    useEffect(() => {
-        if (!user) return;
-
-        const handleActivity = () => {
-            authService.updateLastActivity();
-        };
-
-        // Track various user activities
-        const events = ['mousedown', 'keydown', 'touchstart', 'scroll'];
-        events.forEach(event => {
-            window.addEventListener(event, handleActivity, { passive: true });
-        });
-
-        return () => {
-            events.forEach(event => {
-                window.removeEventListener(event, handleActivity);
-            });
-        };
-    }, [user]);
-
-    // ================================================
-    // INITIALIZATION
+    // INITIALIZATION & LISTENER (Background)
     // ================================================
 
     useEffect(() => {
         let mounted = true;
-        // `resolved` tracks whether loading has been resolved (by either
-        // initAuth or the onAuthStateChange INITIAL_SESSION event).
-        // If we already have a cachedUser from sync restore, we start resolved.
-        const resolved = { current: !!cachedUser };
 
-        // Safety timeout — only relevant when cachedUser is null and we're
-        // waiting for an async session refresh. 15s allows for Vercel cold starts.
-        const loadingTimeout = setTimeout(() => {
-            if (mounted && !resolved.current) {
-                console.warn('[Auth] Initialization timeout — stopping loading spinner.');
-                resolved.current = true;
-                // DON'T clear storage on timeout — the session may still be valid,
-                // just slow to verify. Let the user retry or login fresh.
-                setIsLoading(false);
-            }
-        }, 15000);
-
-        // If already resolved (cachedUser found), clear the timeout immediately
-        if (resolved.current) clearTimeout(loadingTimeout);
-
-        const resolve = (newUser: User | null) => {
-            if (!mounted || resolved.current) return;
-            resolved.current = true;
-            clearTimeout(loadingTimeout);
-            setUser(newUser);
-            setIsLoading(false);
-            if (newUser) {
-                startSessionCheck();
-                authService.updateLastActivity();
-            }
-        };
-
-        const initAuth = async () => {
-            // If we already have a cached user from the synchronous restore,
-            // still fetch the full profile in the background to enrich user data
-            // (e.g. section_access from DB profile), but DON'T block rendering.
-            if (cachedUser) {
-                try {
-                    const fullUser = await authService.getCurrentUser();
-                    if (mounted && fullUser) {
-                        // Silently update user with full profile data
-                        setUser(fullUser);
-                        startSessionCheck();
-                        authService.updateLastActivity();
-                    } else if (mounted && !fullUser) {
-                        // Session was invalid server-side — clear and redirect to login
-                        console.warn('[Auth] Cached session invalid on server, clearing.');
-                        clearAllAuthStorage();
-                        setUser(null);
-                    }
-                } catch (err: any) {
-                    // Background enrichment failed — keep using cached user.
-                    // AbortError or network failure: session is likely still valid locally.
-                    if (err?.name !== 'AbortError') {
-                        console.warn('[Auth] Background profile fetch failed, using cached session:', err);
-                    }
-                }
-                return;
-            }
-
-            // No cached user — rely on getSession / token refresh
+        const verifyAuthInBackground = async () => {
             try {
-                const currentUser = await authService.getCurrentUser();
-                resolve(currentUser);
-            } catch (err: any) {
-                // AbortError: just ignore and let the flow continue
-                if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) {
-                    console.warn('[Auth] Request aborted, ignoring.');
+                // Verify auth behind the scenes, never blocking rendering
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                
+                if (sessionError) {
+                    console.error('[Auth] Background verify error:', sessionError);
+                    // DO NOT clear user state on network error if we have a cache! Just fail silently.
                     return;
                 }
-                console.error('[Auth] Initialization error:', err);
-                if (mounted && !resolved.current) {
-                    resolved.current = true;
-                    clearTimeout(loadingTimeout);
-                    // Don't clear storage — just stop loading
-                    setIsLoading(false);
+
+                if (session?.user) {
+                    const currentUser = await authService.getCurrentUser();
+                    if (mounted) {
+                        setUser(currentUser); // Upgrade to full user with profile if fetched successfully
+                    }
+                } else if (mounted) {
+                    // No valid session on server -> Clear out the potentially stale cached user
+                    setUser(null);
                 }
+            } catch (err) {
+                console.error('[Auth] Background catch error:', err);
+                // Fail silently, preserving cache
             }
         };
 
-        initAuth();
+        // Start background verification
+        verifyAuthInBackground();
 
-        // Subscribe to auth state changes (also fires INITIAL_SESSION on mount)
-        const { data: { subscription } } = authService.onAuthStateChange((newUser) => {
+        // Listen for future auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log(`[Auth] State change: ${event}`);
+            
             if (!mounted) return;
 
-            if (!resolved.current) {
-                // Auth listener resolved before initAuth — use this result
-                resolve(newUser);
+            if (event === 'SIGNED_OUT') {
+                setUser(null);
+            } else if (session?.user) {
+                const currentUser = await authService.getCurrentUser();
+                if (mounted) {
+                    setUser(currentUser);
+                }
             } else {
-                // Already resolved; just keep user state in sync.
-                // Don't overwrite a cached super admin with null from Supabase listener
-                const isSuperAdmin = user?.id === 'super-admin-001' || cachedUser?.id === 'super-admin-001';
-                if (isSuperAdmin && newUser === null) {
-                    return;
-                }
-                setUser(newUser);
-                if (newUser) {
-                    startSessionCheck();
-                    authService.updateLastActivity();
-                } else {
-                    stopSessionCheck();
-                }
+                setUser(null);
             }
         });
 
         return () => {
             mounted = false;
-            clearTimeout(loadingTimeout);
             subscription.unsubscribe();
-            stopSessionCheck();
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // ================================================
@@ -267,7 +167,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // ACTIONS
     // ================================================
 
-    const signIn = useCallback(async (email: string, password: string): Promise<{ success: boolean; locked?: boolean; lockoutMinutes?: number }> => {
+    const signIn = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
         setIsLoading(true);
         setError(null);
 
@@ -277,44 +177,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (result.error) {
                 setError(result.error);
                 setIsLoading(false);
-                return {
-                    success: false,
-                    locked: result.locked,
-                    lockoutMinutes: result.lockoutMinutes
-                };
+                return { success: false, error: result.error };
             }
 
             setUser(result.user);
-            startSessionCheck();
-            authService.updateLastActivity();
             setIsLoading(false);
             return { success: true };
         } catch (err) {
-            setError('An unexpected error occurred');
+            setError('An unexpected error occurred during login.');
             setIsLoading(false);
-            return { success: false };
+            return { success: false, error: 'Unexpected error' };
         }
-    }, [startSessionCheck]);
+    }, []);
 
     const signOut = useCallback(async () => {
-        // 1. Clear storage immediately (instant, no network)
-        clearAllAuthStorage();
-        stopSessionCheck();
-        setUser(null);
-        setIsLoading(false);
-
-        // 2. Call Supabase signOut with timeout — don't block the UI
+        setIsLoading(true);
         try {
-            const signOutPromise = authService.signOut();
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('signOut timeout')), 3000)
-            );
-            await Promise.race([signOutPromise, timeoutPromise]);
+            await authService.signOut();
+            setUser(null);
         } catch (err) {
-            // Timeout or error — doesn't matter, user is already logged out locally
-            console.warn('Sign out API call failed or timed out:', err);
+            console.error('[Auth] Sign out error:', err);
+        } finally {
+            setIsLoading(false);
         }
-    }, [stopSessionCheck]);
+    }, []);
 
     const resetPassword = useCallback(async (email: string) => {
         const result = await authService.sendPasswordResetEmail(email);
@@ -323,7 +209,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const refreshProfile = useCallback(async () => {
         if (!user?.id) return;
-
         try {
             const profile = await authService.getProfile(user.id);
             if (profile) {
@@ -340,31 +225,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     }, [user?.id]);
 
-    const clearError = useCallback(() => {
-        setError(null);
-    }, []);
+    const clearError = useCallback(() => setError(null), []);
 
     // ================================================
     // CONTEXT VALUE
     // ================================================
 
     const value: AuthContextType = {
-        // State
         user,
         profile,
         userRole,
         sectionAccess,
-        isAuthenticated: user !== null,
+        isAuthenticated: !!user,
         isLoading,
         error,
-
-        // Permission checks
         hasAccess: checkAccess,
         isViewOnly: checkViewOnly,
         canManageUsers: userCanManageUsers,
         canManageRoles: userCanManageRoles,
-
-        // Actions
         signIn,
         signOut,
         resetPassword,

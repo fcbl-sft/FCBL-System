@@ -1,6 +1,6 @@
 /**
  * Auth Service - Handles Supabase authentication operations with RBAC
- * Includes: account lockout, login activity logging, profile management, session timeout
+ * Includes: login activity logging, profile management
  */
 import { supabase } from '../../lib/supabase';
 import { User, UserRole, UserProfile, SectionAccessMap, LoginActivity } from '../../types';
@@ -13,8 +13,6 @@ import { DEFAULT_ROLE_ACCESS } from '../constants/permissionConstants';
 export interface SignInResult {
     user: User | null;
     error: string | null;
-    locked?: boolean;
-    lockoutMinutes?: number;
 }
 
 export interface AuthError {
@@ -33,22 +31,6 @@ export const PASSWORD_REQUIREMENTS = {
     requireNumber: true,
     requireSpecial: true,
 };
-
-const MAX_FAILED_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MINUTES = 15;
-const SESSION_TIMEOUT_MINUTES = 30;
-
-// Super Admin credentials
-const SUPER_ADMIN_CREDENTIALS = {
-    email: 'sft.salman94@gmail.com',
-    password: '*#Salman042',
-};
-
-// Session activity storage key
-const LAST_ACTIVITY_KEY = 'fcbl_last_activity';
-
-// Super admin session cache key (persists across reloads)
-const SUPER_ADMIN_SESSION_KEY = 'fcbl_super_admin_session';
 
 // ================================================
 // VALIDATION FUNCTIONS
@@ -94,22 +76,12 @@ function mapSupabaseUser(supabaseUser: any, profile?: UserProfile | null): User 
     const rawAccess = profile?.section_access;
 
     if (rawAccess && typeof rawAccess === 'object' && !Array.isArray(rawAccess)) {
-        // Check it has at least one valid SectionId key
         const validKeys = ['dashboard', 'summary', 'tech_pack', 'order_sheet', 'consumption', 'pp_meeting', 'mq_control', 'commercial', 'qc_inspect', 'user_management', 'role_management'];
         const hasValidKey = Object.keys(rawAccess).some(k => validKeys.includes(k));
         if (hasValidKey) {
             sectionAccess = rawAccess;
         }
     }
-
-    // Debug logging — visible in browser console to help diagnose permission issues
-    console.log('[Auth] Profile loaded:', {
-        email: supabaseUser.email,
-        role,
-        profileSectionAccess: rawAccess,
-        effectiveSectionAccess: sectionAccess,
-        usingDefaults: sectionAccess === DEFAULT_ROLE_ACCESS[role],
-    });
 
     return {
         id: supabaseUser.id,
@@ -123,84 +95,6 @@ function mapSupabaseUser(supabaseUser: any, profile?: UserProfile | null): User 
         profile: profile || undefined,
         sectionAccess,
     };
-}
-
-// ================================================
-// ACCOUNT LOCKOUT FUNCTIONS
-// ================================================
-
-async function checkAccountLockout(email: string): Promise<{ locked: boolean; minutesRemaining?: number }> {
-    try {
-        const { data, error } = await supabase
-            .from('account_lockouts')
-            .select('*')
-            .eq('email', email.toLowerCase())
-            .single();
-
-        if (error || !data) {
-            return { locked: false };
-        }
-
-        if (data.locked_until) {
-            const lockedUntil = new Date(data.locked_until);
-            const now = new Date();
-
-            if (lockedUntil > now) {
-                const minutesRemaining = Math.ceil((lockedUntil.getTime() - now.getTime()) / (1000 * 60));
-                return { locked: true, minutesRemaining };
-            }
-        }
-
-        return { locked: false };
-    } catch {
-        return { locked: false };
-    }
-}
-
-async function incrementFailedAttempts(email: string): Promise<{ locked: boolean; attempts: number }> {
-    const normalizedEmail = email.toLowerCase();
-
-    try {
-        // Get current attempts
-        const { data: existing } = await supabase
-            .from('account_lockouts')
-            .select('*')
-            .eq('email', normalizedEmail)
-            .single();
-
-        const currentAttempts = existing?.failed_attempts || 0;
-        const newAttempts = currentAttempts + 1;
-        const shouldLock = newAttempts >= MAX_FAILED_ATTEMPTS;
-
-        const lockoutData = {
-            email: normalizedEmail,
-            failed_attempts: newAttempts,
-            locked_until: shouldLock
-                ? new Date(Date.now() + LOCKOUT_DURATION_MINUTES * 60 * 1000).toISOString()
-                : null,
-            last_attempt: new Date().toISOString(),
-        };
-
-        await supabase
-            .from('account_lockouts')
-            .upsert(lockoutData, { onConflict: 'email' });
-
-        return { locked: shouldLock, attempts: newAttempts };
-    } catch (err) {
-        console.error('Failed to track login attempts:', err);
-        return { locked: false, attempts: 0 };
-    }
-}
-
-async function resetFailedAttempts(email: string): Promise<void> {
-    try {
-        await supabase
-            .from('account_lockouts')
-            .delete()
-            .eq('email', email.toLowerCase());
-    } catch (err) {
-        console.error('Failed to reset login attempts:', err);
-    }
 }
 
 // ================================================
@@ -269,74 +163,10 @@ export async function updateProfile(
 }
 
 // ================================================
-// SESSION TIMEOUT
-// ================================================
-
-export function updateLastActivity(): void {
-    localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
-}
-
-export function hasSessionExpired(): boolean {
-    const lastActivity = localStorage.getItem(LAST_ACTIVITY_KEY);
-    if (!lastActivity) return false;
-
-    const lastActivityTime = parseInt(lastActivity, 10);
-    const now = Date.now();
-    const timeoutMs = SESSION_TIMEOUT_MINUTES * 60 * 1000;
-
-    return (now - lastActivityTime) > timeoutMs;
-}
-
-export function clearSessionActivity(): void {
-    localStorage.removeItem(LAST_ACTIVITY_KEY);
-}
-
-// ================================================
 // AUTHENTICATION FUNCTIONS
 // ================================================
 
 export async function signIn(email: string, password: string): Promise<SignInResult> {
-    // Check for Super Admin fallback credentials
-    if (email === SUPER_ADMIN_CREDENTIALS.email && password === SUPER_ADMIN_CREDENTIALS.password) {
-        // Log successful login
-        await logLoginActivity(email, 'success', 'super-admin-001');
-        await resetFailedAttempts(email);
-        updateLastActivity();
-
-        const superAdminAccess = DEFAULT_ROLE_ACCESS['super_admin'];
-
-        const superAdminUser: User = {
-            id: 'super-admin-001',
-            email: SUPER_ADMIN_CREDENTIALS.email,
-            fullName: 'Super Admin',
-            role: 'super_admin',
-            emailVerified: true,
-            createdAt: new Date().toISOString(),
-            lastLoginAt: new Date().toISOString(),
-            sectionAccess: superAdminAccess,
-        };
-
-        // Persist super admin session to localStorage so it survives page reloads
-        localStorage.setItem(SUPER_ADMIN_SESSION_KEY, JSON.stringify(superAdminUser));
-
-        return {
-            user: superAdminUser,
-            error: null,
-        };
-    }
-
-    // Check account lockout
-    const lockoutStatus = await checkAccountLockout(email);
-    if (lockoutStatus.locked) {
-        await logLoginActivity(email, 'locked');
-        return {
-            user: null,
-            error: `Account is temporarily locked. Please try again in ${lockoutStatus.minutesRemaining} minutes.`,
-            locked: true,
-            lockoutMinutes: lockoutStatus.minutesRemaining,
-        };
-    }
-
     try {
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
@@ -344,38 +174,18 @@ export async function signIn(email: string, password: string): Promise<SignInRes
         });
 
         if (error || !data.user) {
-            // Increment failed attempts
-            const { locked, attempts } = await incrementFailedAttempts(email);
-            await logLoginActivity(email, locked ? 'locked' : 'failed');
-
-            if (locked) {
-                return {
-                    user: null,
-                    error: `Too many failed attempts. Account locked for ${LOCKOUT_DURATION_MINUTES} minutes.`,
-                    locked: true,
-                    lockoutMinutes: LOCKOUT_DURATION_MINUTES,
-                };
-            }
-
-            const remaining = MAX_FAILED_ATTEMPTS - attempts;
+            await logLoginActivity(email, 'failed');
             return {
                 user: null,
-                error: remaining > 0
-                    ? `Invalid email or password. ${remaining} attempts remaining.`
-                    : 'Invalid email or password',
+                error: 'Invalid email or password',
             };
         }
-
-        // Successful login - reset attempts and fetch profile
-        await resetFailedAttempts(email);
 
         // Fetch user profile
         const profile = await getProfile(data.user.id);
 
         // Check if user is active
         if (profile && !profile.is_active) {
-            // NEVER call automatic signOut!
-            // await supabase.auth.signOut();
             await logLoginActivity(email, 'failed', data.user.id);
             return {
                 user: null,
@@ -384,7 +194,6 @@ export async function signIn(email: string, password: string): Promise<SignInRes
         }
 
         await logLoginActivity(email, 'success', data.user.id);
-        updateLastActivity();
 
         return {
             user: mapSupabaseUser(data.user, profile),
@@ -401,9 +210,6 @@ export async function signIn(email: string, password: string): Promise<SignInRes
 
 export async function signOut(): Promise<{ error: string | null }> {
     try {
-        clearSessionActivity();
-        // Clear super admin session cache on logout
-        localStorage.removeItem(SUPER_ADMIN_SESSION_KEY);
         const { error } = await supabase.auth.signOut();
         if (error) {
             return { error: error.message };
@@ -415,142 +221,9 @@ export async function signOut(): Promise<{ error: string | null }> {
     }
 }
 
-/**
- * Restore super admin session from localStorage (instant, no network call).
- * Returns the cached super admin user or null.
- */
-export function getSuperAdminFromCache(): User | null {
-    try {
-        const cached = localStorage.getItem(SUPER_ADMIN_SESSION_KEY);
-        if (cached) {
-            return JSON.parse(cached) as User;
-        }
-    } catch {
-        localStorage.removeItem(SUPER_ADMIN_SESSION_KEY);
-    }
-    return null;
-}
-
-/**
- * Decode a JWT payload without any library (works in all browsers).
- * Returns the parsed JSON payload or null on failure.
- */
-function decodeJwtPayload(token: string): any | null {
-    try {
-        const parts = token.split('.');
-        if (parts.length !== 3) return null;
-        // Base64url → Base64
-        let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-        // Pad to multiple of 4
-        while (base64.length % 4 !== 0) base64 += '=';
-        const json = atob(base64);
-        return JSON.parse(json);
-    } catch {
-        return null;
-    }
-}
-
-/**
- * Synchronously restore a User object from the Supabase session stored in
- * localStorage. This parses the JWT access_token to extract user id, email,
- * and role metadata — zero network calls, ~0ms.
- *
- * Returns null if no valid session is found.
- */
-export function getSessionUserSync(): User | null {
-    // 1. Check super admin cache first
-    const superAdmin = getSuperAdminFromCache();
-    if (superAdmin) return superAdmin;
-
-    // 2. Read the Supabase persisted session from localStorage
-    try {
-        const raw = localStorage.getItem('fcbl-auth');
-        if (!raw) return null;
-
-        const parsed = JSON.parse(raw);
-        // Supabase stores: { access_token, refresh_token, expires_at, user, ... }
-        const accessToken: string | undefined = parsed?.access_token;
-        const storedUser = parsed?.user;
-        if (!accessToken || !storedUser?.id) return null;
-
-        // 3. Check token expiry locally
-        const payload = decodeJwtPayload(accessToken);
-        if (payload?.exp) {
-            const nowSec = Math.floor(Date.now() / 1000);
-            if (payload.exp < nowSec) {
-                // Token expired — Supabase autoRefreshToken will handle it,
-                // but we can't trust the session right now.
-                // Return null so the app shows loading briefly while token refreshes.
-                return null;
-            }
-        }
-
-        // 4. Build a minimal User from stored session data (no profile yet)
-        const metadata = storedUser.user_metadata || {};
-        const role: UserRole = (metadata.role as UserRole) || 'viewer';
-        const sectionAccess = DEFAULT_ROLE_ACCESS[role];
-
-        return {
-            id: storedUser.id,
-            email: storedUser.email || '',
-            fullName: metadata.full_name || metadata.fullName || storedUser.email?.split('@')[0] || '',
-            role,
-            factoryName: metadata.factory_name || metadata.factoryName,
-            emailVerified: !!storedUser.email_confirmed_at,
-            createdAt: storedUser.created_at,
-            lastLoginAt: storedUser.last_sign_in_at,
-            sectionAccess,
-        };
-    } catch {
-        return null;
-    }
-}
-
-/**
- * Clear ALL Supabase / auth-related data from localStorage and sessionStorage.
- * Use this to recover from corrupted sessions.
- */
-export function clearAllAuthStorage(): void {
-    try {
-        // Remove known keys
-        localStorage.removeItem('fcbl-auth');
-        localStorage.removeItem(SUPER_ADMIN_SESSION_KEY);
-        localStorage.removeItem(LAST_ACTIVITY_KEY);
-
-        // Remove any sb-* keys (Supabase internal)
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && (key.startsWith('sb-') || key.startsWith('supabase.'))) {
-                keysToRemove.push(key);
-            }
-        }
-        keysToRemove.forEach(k => localStorage.removeItem(k));
-
-        // Also clear sessionStorage equivalents
-        const sessionKeysToRemove: string[] = [];
-        for (let i = 0; i < sessionStorage.length; i++) {
-            const key = sessionStorage.key(i);
-            if (key && (key.startsWith('sb-') || key.startsWith('supabase.') || key === 'fcbl-auth')) {
-                sessionKeysToRemove.push(key);
-            }
-        }
-        sessionKeysToRemove.forEach(k => sessionStorage.removeItem(k));
-    } catch {
-        // Storage not accessible — nothing we can do
-    }
-}
-
 export async function getCurrentUser(): Promise<User | null> {
-    // First check for super admin cached session (instant, no network)
-    const superAdmin = getSuperAdminFromCache();
-    if (superAdmin) {
-        return superAdmin;
-    }
-
     try {
         // Use getSession() — reads from localStorage, no network call needed
-        // This is much faster than getUser() which validates via network
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError || !session?.user) {
@@ -562,7 +235,6 @@ export async function getCurrentUser(): Promise<User | null> {
 
         return mapSupabaseUser(session.user, profile);
     } catch (err: any) {
-        if (err.name === 'AbortError' || err.message?.includes('AbortError')) return null;
         console.error('Get current user error:', err);
         return null;
     }
@@ -598,7 +270,6 @@ export async function sendPasswordResetEmail(email: string): Promise<{ error: st
 
 export async function updatePassword(newPassword: string): Promise<{ error: string | null }> {
     try {
-        // Validate password
         const validation = validatePassword(newPassword);
         if (!validation.valid) {
             return { error: validation.errors[0] };
@@ -617,31 +288,6 @@ export async function updatePassword(newPassword: string): Promise<{ error: stri
         console.error('Update password error:', err);
         return { error: 'Failed to update password' };
     }
-}
-
-export function onAuthStateChange(callback: (user: User | null) => void) {
-    return supabase.auth.onAuthStateChange(async (event, session) => {
-        // On sign out, also clear super admin cache
-        if (event === 'SIGNED_OUT') {
-            localStorage.removeItem(SUPER_ADMIN_SESSION_KEY);
-            callback(null);
-            return;
-        }
-
-        if (session?.user) {
-            // Fetch profile, but don't let a DB error block the callback —
-            // fall back to session metadata if the profile fetch fails.
-            let profile: UserProfile | null = null;
-            try {
-                profile = await getProfile(session.user.id);
-            } catch (err) {
-                console.warn('[Auth] Profile fetch failed in onAuthStateChange, using session metadata:', err);
-            }
-            callback(mapSupabaseUser(session.user, profile));
-        } else {
-            callback(null);
-        }
-    });
 }
 
 // ================================================

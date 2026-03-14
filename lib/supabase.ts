@@ -6,11 +6,11 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
  * Configured with auto-refresh and session persistence to prevent stale token issues.
  */
 
-const supabaseUrl = 'https://zilbigcueizkfvvpuwjp.supabase.co';
-const supabaseAnonKey = 'sb_publishable_uSaP-URx2fUnvoWgMrL7-g_zEnamxgY';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase configuration is missing.');
+  console.error('Supabase configuration is missing. Ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in your .env file.');
 }
 
 // Singleton pattern: only one GoTrueClient instance is ever created

@@ -108,8 +108,6 @@ export const projectService = {
             // can fire before the auth token is available (race condition on
             // production deployments like Vercel where timing differs).
             const { data: { session } } = await supabase.auth.getSession();
-            console.log('[ProjectService] getProjects - session:', session ? 'present' : 'none');
-
             const { data, error } = await supabase
                 .from('projects')
                 .select('*')
@@ -120,7 +118,6 @@ export const projectService = {
                 return { data: null, error: error.message };
             }
 
-            console.log('[ProjectService] Loaded', (data || []).length, 'projects');
             const projects = (data || []).map(mapFromDb);
             return { data: projects, error: null };
         } catch (err: any) {
