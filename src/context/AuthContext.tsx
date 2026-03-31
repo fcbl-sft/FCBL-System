@@ -1,10 +1,17 @@
 /**
- * Auth Context - Minimal Implementation with Emergency Bypass
- * Simple, reliable auth flow relying entirely on Supabase.
- * No timeouts, no aborts, no artificial lockouts.
- * Renders instantly using cached localStorage data.
+ * Auth Context - Reliable session restore implementation
+ *
+ * Design principles:
+ * - ALWAYS start with isLoading = true, user = null
+ * - Initialize using getSession() — single, awaited call with no concurrency
+ * - onAuthStateChange listener handles ONLY future events (SIGNED_IN after login,
+ *   SIGNED_OUT, TOKEN_REFRESHED) — NOT the initial session restore
+ * - ALWAYS fetch fresh profile from DB when a session exists
+ * - NEVER use localStorage cache for user name/role (stale data)
+ * - ONLY place for signOut is the logout action
+ * - isLoading = false ONLY in the finally block of initialization
  */
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { User, UserRole, UserProfile, SectionId, SectionAccessLevel, SectionAccessMap } from '../../types';
 import * as authService from '../services/authService';
 import { supabase } from '../../lib/supabase';
@@ -36,52 +43,50 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // ================================================
-// LOCAL STORAGE CACHE HELPERS
+// HELPER: Build complete User object from auth + profile
 // ================================================
 
-// Attempt to instantly read the cached Supabase user object from localStorage
-const getCachedUser = (): User | null => {
-    try {
-        const stored = localStorage.getItem('fcbl-auth');
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            const rawUser = parsed?.user;
-            if (rawUser) {
-                // Return a minimal user object constructed from the cached session
-                const metadata = rawUser.user_metadata || {};
-                const role: UserRole = (metadata.role as UserRole) || 'viewer';
-                const sectionAccess = DEFAULT_ROLE_ACCESS[role];
+function buildUser(authUser: any, profile: UserProfile): User {
+    const role = profile.role as UserRole;
+    let sectionAccess: SectionAccessMap = DEFAULT_ROLE_ACCESS[role] || DEFAULT_ROLE_ACCESS['viewer'];
 
-                return {
-                    id: rawUser.id,
-                    email: rawUser.email || '',
-                    fullName: metadata.full_name || metadata.fullName || rawUser.email?.split('@')[0] || '',
-                    role,
-                    factoryName: metadata.factory_name || metadata.factoryName,
-                    emailVerified: !!rawUser.email_confirmed_at,
-                    createdAt: rawUser.created_at,
-                    lastLoginAt: rawUser.last_sign_in_at,
-                    sectionAccess,
-                };
-            }
+    const rawAccess = profile.section_access;
+    if (rawAccess && typeof rawAccess === 'object' && !Array.isArray(rawAccess)) {
+        const validKeys = [
+            'dashboard', 'summary', 'tech_pack', 'order_sheet', 'consumption',
+            'pp_meeting', 'mq_control', 'commercial', 'qc_inspect',
+            'user_management', 'role_management', 'admin',
+        ];
+        if (Object.keys(rawAccess).some(k => validKeys.includes(k))) {
+            sectionAccess = rawAccess as SectionAccessMap;
         }
-    } catch {
-        return null; // Fail silently on format errors
     }
-    return null;
-};
+
+    return {
+        id: authUser.id,
+        email: authUser.email || '',
+        fullName: profile.name || authUser.email?.split('@')[0] || '',
+        role,
+        factoryName: profile.factory_id,
+        emailVerified: !!authUser.email_confirmed_at,
+        createdAt: authUser.created_at,
+        lastLoginAt: authUser.last_sign_in_at,
+        profile: profile,
+        sectionAccess,
+    };
+}
 
 // ================================================
 // PROVIDER
 // ================================================
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    // 1. Instantly resolve user from cache
-    const [user, setUser] = useState<User | null>(() => getCachedUser());
-    
-    // 2. NEVER start with loading=true. This bypassing rendering blocks.
-    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    // Flag: has the initial getSession() call completed?
+    // Used to prevent the onAuthStateChange listener from re-processing the startup event.
+    const initDoneRef = useRef(false);
 
     // Derived state
     const profile = user?.profile || null;
@@ -89,56 +94,94 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const sectionAccess = user?.sectionAccess || (userRole ? DEFAULT_ROLE_ACCESS[userRole] : null);
 
     // ================================================
-    // INITIALIZATION & LISTENER (Background)
+    // HELPER: fetch profile and set user state
+    // ================================================
+
+    const loadProfile = useCallback(async (authUser: any, setUserFn: typeof setUser) => {
+        console.log('[Auth] Session found:', authUser.id);
+        console.log('[Auth] Fetching profile from database...');
+
+        const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authUser.id)
+            .single();
+
+        if (profileError) {
+            console.error('[Auth] Profile fetch error:', profileError.message);
+        }
+
+        if (profileData) {
+            console.log('[Auth] Profile loaded:', profileData.name, '/', profileData.role);
+            const completeUser = buildUser(authUser, profileData as UserProfile);
+            setUserFn(completeUser);
+            console.log('[Auth] User state set successfully');
+        } else {
+            console.warn('[Auth] No profile found for user:', authUser.id);
+            setUserFn(null);
+        }
+    }, []);
+
+    // ================================================
+    // INITIALIZATION
     // ================================================
 
     useEffect(() => {
         let mounted = true;
 
-        const verifyAuthInBackground = async () => {
+        const initialize = async () => {
+            console.log('[Auth] Initializing...');
             try {
-                // Verify auth behind the scenes, never blocking rendering
+                // getSession() reads from Supabase's internal localStorage store.
+                // This is the safe, single call for restoring the session on mount.
+                console.log('[Auth] Getting session...');
                 const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                
+
                 if (sessionError) {
-                    console.error('[Auth] Background verify error:', sessionError);
-                    // DO NOT clear user state on network error if we have a cache! Just fail silently.
+                    console.error('[Auth] Session error:', sessionError.message);
+                    if (mounted) setUser(null);
                     return;
                 }
 
                 if (session?.user) {
-                    const currentUser = await authService.getCurrentUser();
-                    if (mounted) {
-                        setUser(currentUser); // Upgrade to full user with profile if fetched successfully
-                    }
-                } else if (mounted) {
-                    // No valid session on server -> Clear out the potentially stale cached user
-                    setUser(null);
+                    await loadProfile(session.user, (u) => { if (mounted) setUser(u); });
+                } else {
+                    console.log('[Auth] No active session found');
+                    if (mounted) setUser(null);
                 }
-            } catch (err) {
-                console.error('[Auth] Background catch error:', err);
-                // Fail silently, preserving cache
+            } catch (err: any) {
+                console.error('[Auth] Initialization error:', err?.message || err);
+                if (mounted) setUser(null);
+            } finally {
+                initDoneRef.current = true;
+                if (mounted) {
+                    setIsLoading(false);
+                    console.log('[Auth] Loading complete');
+                }
             }
         };
 
-        // Start background verification
-        verifyAuthInBackground();
+        initialize();
 
-        // Listen for future auth changes
+        // ================================================
+        // LISTENER: handles FUTURE auth events only
+        // (login, logout, token refresh — NOT the initial session restore)
+        // ================================================
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             console.log(`[Auth] State change: ${event}`);
-            
+
+            // Skip events that fire before/during initialization —
+            // initialize() already handles the startup session.
+            if (!initDoneRef.current) return;
             if (!mounted) return;
 
             if (event === 'SIGNED_OUT') {
                 setUser(null);
-            } else if (session?.user) {
-                const currentUser = await authService.getCurrentUser();
-                if (mounted) {
-                    setUser(currentUser);
-                }
-            } else {
-                setUser(null);
+            } else if (
+                (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') &&
+                session?.user
+            ) {
+                await loadProfile(session.user, (u) => { if (mounted) setUser(u); });
             }
         });
 
@@ -146,7 +189,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             mounted = false;
             subscription.unsubscribe();
         };
-    }, []);
+    }, [loadProfile]);
 
     // ================================================
     // PERMISSION CHECKS
@@ -176,17 +219,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (result.error) {
                 setError(result.error);
-                setIsLoading(false);
                 return { success: false, error: result.error };
             }
 
+            // authService.signIn already fetches the profile — result.user is complete
             setUser(result.user);
-            setIsLoading(false);
             return { success: true };
         } catch (err) {
-            setError('An unexpected error occurred during login.');
+            const msg = 'An unexpected error occurred during login.';
+            setError(msg);
+            return { success: false, error: msg };
+        } finally {
             setIsLoading(false);
-            return { success: false, error: 'Unexpected error' };
         }
     }, []);
 
@@ -210,18 +254,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const refreshProfile = useCallback(async () => {
         if (!user?.id) return;
         try {
-            const profile = await authService.getProfile(user.id);
-            if (profile) {
+            const profileData = await authService.getProfile(user.id);
+            if (profileData) {
                 setUser(prev => prev ? {
                     ...prev,
-                    profile,
-                    role: profile.role,
-                    fullName: profile.name,
-                    sectionAccess: profile.section_access,
+                    profile: profileData,
+                    role: profileData.role as UserRole,
+                    fullName: profileData.name,
+                    sectionAccess: profileData.section_access as SectionAccessMap,
                 } : null);
             }
         } catch (err) {
-            console.error('Refresh profile error:', err);
+            console.error('[Auth] Refresh profile error:', err);
         }
     }, [user?.id]);
 

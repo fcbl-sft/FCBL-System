@@ -25,11 +25,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     requiredSection,
     requiredAccess = 'view'
 }) => {
-    const { isAuthenticated, userRole, hasAccess } = useAuth();
+    const { isAuthenticated, isLoading, userRole, hasAccess } = useAuth();
     const location = useLocation();
 
+    // Wait for auth initialization before making any routing decisions.
+    // This prevents data fetches firing before the real profile is loaded from DB.
+    if (isLoading) {
+        return <LoadingSpinner />;
+    }
+
     // Redirect to login if not authenticated
-    // Note: We no longer check isLoading here, allowing instant rendering or redirect
     if (!isAuthenticated) {
         return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
     }

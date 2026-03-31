@@ -61,7 +61,7 @@ const createDefaultPacking = (): PackingInfo => ({
 export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(false);
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, isLoading, user } = useAuth();
     const retriedRef = useRef(false);
 
     const refreshProjects = useCallback(async () => {
@@ -79,11 +79,11 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
     }, []);
 
-    // Fetch projects when user becomes available.
-    // If the first fetch returns empty (possible race with Supabase session init),
-    // retry once after a short delay to give the session time to fully initialize.
+    // Fetch projects only after auth is fully initialized (profile loaded from DB).
+    // The isLoading guard is critical: without it, data fetches fire with the wrong
+    // permissions before the real profile arrives, causing empty results.
     useEffect(() => {
-        if (!isAuthenticated || !user) return;
+        if (isLoading || !isAuthenticated || !user) return;
 
         retriedRef.current = false;
 
@@ -102,7 +102,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         };
 
         fetchWithRetry();
-    }, [isAuthenticated, user, refreshProjects]);
+    }, [isLoading, isAuthenticated, user, refreshProjects]);
 
     const getProject = useCallback((id: string) => {
         return projects.find(p => p.id === id);
