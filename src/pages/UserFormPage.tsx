@@ -9,7 +9,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { UserRole, SectionId, SectionAccessMap } from '../../types';
 import * as userService from '../services/userService';
 import { validatePassword, validateEmail } from '../services/authService';
-import { ROLE_LABELS, ALL_SECTIONS, SECTION_LABELS, DEFAULT_ROLE_ACCESS, ASSIGNABLE_ROLES } from '../constants/permissionConstants';
+import { ROLE_LABELS, ALL_SECTIONS, ALL_ROLES, SECTION_LABELS, DEFAULT_ROLE_ACCESS, ASSIGNABLE_ROLES } from '../constants/permissionConstants';
 import ROUTES from '../router/routes';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -161,7 +161,7 @@ const UserFormPage: React.FC = () => {
     };
 
     // Available roles based on current user
-    const availableRoles = userRole === 'super_admin' ? ALL_SECTIONS : ASSIGNABLE_ROLES;
+    const availableRoles = userRole === 'super_admin' ? ALL_ROLES : ASSIGNABLE_ROLES;
 
     // Sections that can be configured (exclude user/role management for non-super_admin)
     const configurableSections = ALL_SECTIONS.filter(section => {

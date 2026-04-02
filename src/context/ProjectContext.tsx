@@ -152,19 +152,30 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, []);
 
     const updateProject = useCallback(async (id: string, updates: Partial<Project>) => {
+        console.log('[DB-SAVE-1] updateProject called:', { id, updateKeys: Object.keys(updates) });
+        if (updates.techPackFiles) {
+            console.log('[DB-SAVE-1] techPackFiles count:', updates.techPackFiles.length);
+        }
         setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
 
         try {
-            const { error } = await projectService.updateProject(id, {
+            const payload = {
                 ...updates,
                 updatedAt: new Date().toISOString()
-            });
+            };
+            console.log('[DB-SAVE-2] Sending to projectService.updateProject:', { id, payloadKeys: Object.keys(payload) });
+            const { data, error } = await projectService.updateProject(id, payload);
+
+            console.log('[DB-SAVE-3] Database response:', { data: data ? 'received' : 'null', error });
+            if (data?.techPackFiles) {
+                console.log('[DB-SAVE-3] Saved techPackFiles count:', data.techPackFiles.length);
+            }
 
             if (error) {
                 throw new Error(error);
             }
         } catch (err: any) {
-            console.error("Database update failed:", err.message || JSON.stringify(err));
+            console.error("[DB-SAVE-ERR] Database update failed:", err.message || JSON.stringify(err));
         }
     }, []);
 

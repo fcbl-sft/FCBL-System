@@ -19,7 +19,13 @@ const TechPackContent: React.FC = () => {
     if (!project) return <LoadingSpinner message="Loading..." />;
 
     const handleUpdateProject = (updatedProject: Project) => {
-        updateProject(project.id, updatedProject);
+        // Only send the fields that TechPackEditor can modify
+        updateProject(project.id, {
+            techPackFiles: updatedProject.techPackFiles,
+            productImage: updatedProject.productImage,
+            productColors: updatedProject.productColors,
+            techPackWorkflow: updatedProject.techPackWorkflow,
+        });
     };
 
     const handleStatusChange = (newStatus: ProjectStatus) => {

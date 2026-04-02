@@ -58,7 +58,10 @@ const mapFromDb = (row: any): Project => ({
 
 /**
  * Map Project (camelCase) to database format (snake_case)
+ * Excludes read-only fields that should never be sent in updates.
  */
+const READONLY_FIELDS = new Set(['id', 'createdAt', 'created_at']);
+
 const mapToDb = (proj: Partial<Project>): Record<string, any> => {
     const mapping: Record<string, string> = {
         factoryName: 'factory_name',
@@ -86,9 +89,11 @@ const mapToDb = (proj: Partial<Project>): Record<string, any> => {
 
     const result: Record<string, any> = {};
     for (const [key, value] of Object.entries(proj)) {
-        if (value !== undefined) {
+        if (value !== undefined && !READONLY_FIELDS.has(key)) {
             const dbKey = mapping[key] || key;
-            result[dbKey] = value;
+            if (!READONLY_FIELDS.has(dbKey)) {
+                result[dbKey] = value;
+            }
         }
     }
     return result;
@@ -196,6 +201,11 @@ export const projectService = {
             const dbData = mapToDb(updates);
             dbData.updated_at = new Date().toISOString();
 
+            console.log('[DB-SVC-1] Supabase update payload keys:', Object.keys(dbData));
+            if (dbData.tech_pack_files) {
+                console.log('[DB-SVC-1] tech_pack_files in payload:', dbData.tech_pack_files.length, 'files');
+            }
+
             const { data, error } = await supabase
                 .from('projects')
                 .update(dbData)
@@ -203,12 +213,19 @@ export const projectService = {
                 .select()
                 .single();
 
+            console.log('[DB-SVC-2] Supabase response:', { hasData: !!data, error: error?.message || null });
+            if (data) {
+                console.log('[DB-SVC-2] Returned tech_pack_files count:', (data.tech_pack_files || []).length);
+            }
+
             if (error) {
+                console.error('[DB-SVC-2] Supabase update ERROR:', error);
                 return { data: null, error: error.message };
             }
 
             return { data: mapFromDb(data), error: null };
         } catch (err: any) {
+            console.error('[DB-SVC-ERR] updateProject exception:', err);
             return { data: null, error: err.message || 'Unknown error' };
         }
     },

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { ArrowLeft, Upload, FileText, Trash2, Download, Image, FileSpreadsheet, FileType, File, Archive, X, CheckCircle, AlertCircle, RefreshCw, AlertTriangle, Plus } from 'lucide-react';
+import { ArrowLeft, Upload, FileText, Trash2, Download, Image, FileSpreadsheet, FileType, File, Archive, X, CheckCircle, AlertCircle, RefreshCw, AlertTriangle, Plus, ChevronDown } from 'lucide-react';
 import { Project, UserRole, ProjectStatus, UploadedTechPack, WorkflowFields, createDefaultWorkflow } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../src/context/AuthContext';
@@ -88,6 +88,9 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
     const reuploadInputRef = useRef<HTMLInputElement>(null);
     const [reuploadTargetFileId, setReuploadTargetFileId] = useState<string | null>(null);
 
+    // Document dropdown expanded state
+    const [docsExpanded, setDocsExpanded] = useState((project.techPackFiles || []).length > 0);
+
     // Product image upload state
     const productImageInputRef = useRef<HTMLInputElement>(null);
     const [isUploadingProductImage, setIsUploadingProductImage] = useState(false);
@@ -113,6 +116,8 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
             const fileExt = file.name.split('.').pop();
             const fileName = `${project.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
+            console.log('[UPLOAD-2] Uploading to storage...', { bucket: 'tech-packs', path: fileName, fileSize: file.size, fileType: file.type });
+
             const { data, error } = await supabase.storage
                 .from('tech-packs')
                 .upload(fileName, file, {
@@ -120,9 +125,10 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
                     upsert: false
                 });
 
+            console.log('[UPLOAD-3] Storage response:', { data, error });
+
             if (error) {
-                console.error('Storage upload error:', error);
-                // Show error to user instead of silently using blob URL
+                console.error('[UPLOAD-3] Storage upload FAILED:', error.message, error);
                 setUploadError(`Upload failed: ${error.message}. Please check that the 'tech-packs' storage bucket exists and is configured correctly in Supabase.`);
                 return null;
             }
@@ -132,14 +138,17 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
                 .from('tech-packs')
                 .getPublicUrl(data.path);
 
+            console.log('[UPLOAD-4] Public URL result:', { publicUrl: publicUrlData?.publicUrl, path: data.path });
+
             if (!publicUrlData?.publicUrl) {
+                console.error('[UPLOAD-4] No public URL returned!');
                 setUploadError('Failed to get file URL. Please check Supabase storage configuration.');
                 return null;
             }
 
             return { url: publicUrlData.publicUrl, path: data.path };
         } catch (err: any) {
-            console.error('Upload error:', err);
+            console.error('[UPLOAD-ERR] Upload exception:', err);
             setUploadError(`Upload failed: ${err.message || 'Unknown error'}. Please try again.`);
             return null;
         }
@@ -148,6 +157,7 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
     // Process and upload files
     const processFiles = async (files: FileList | File[]) => {
         const fileArray = Array.from(files);
+        console.log('[UPLOAD-1] Files selected:', fileArray.map(f => ({ name: f.name, size: f.size, type: f.type })));
         setUploadError(null);
         setUploadSuccess(null);
 
@@ -175,6 +185,8 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
             const result = await uploadToStorage(file);
             clearInterval(progressInterval);
 
+            console.log('[UPLOAD-5] Upload result for', file.name, ':', result);
+
             if (result) {
                 const name = prompt(`Enter name for "${file.name}":`, file.name.split('.')[0] || `File ${project.techPackFiles.length + newFiles.length + 1}`);
 
@@ -190,6 +202,7 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
                         storagePath: result.path || undefined
                     };
                     newFiles.push(newFile);
+                    console.log('[UPLOAD-6] File object created:', JSON.stringify(newFile, null, 2));
                 }
             }
 
@@ -203,14 +216,18 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
         }
 
         if (newFiles.length > 0) {
+            const updatedFiles = [...(project.techPackFiles || []), ...newFiles];
+            console.log('[UPLOAD-7] Calling onUpdateProject with techPackFiles:', JSON.stringify(updatedFiles, null, 2));
             const updatedProject = {
                 ...project,
-                techPackFiles: [...(project.techPackFiles || []), ...newFiles]
+                techPackFiles: updatedFiles
             };
             onUpdateProject(updatedProject);
             setActiveFileId(newFiles[newFiles.length - 1].id);
             setUploadSuccess(`Successfully uploaded ${newFiles.length} file(s)`);
             setTimeout(() => setUploadSuccess(null), 3000);
+        } else {
+            console.warn('[UPLOAD-7] No new files to save (upload may have failed or user cancelled)');
         }
     };
 
@@ -766,47 +783,31 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
                         )}
                     </div>
 
-                    <div className="p-4 border-b border-gray-100 font-bold text-xs text-gray-500 uppercase tracking-wider">
-                        Uploaded Files ({(project.techPackFiles || []).length})
-                    </div>
-
-                    {/* Drag & Drop Zone */}
+                    {/* Compact Drag & Drop Zone */}
                     <div
                         ref={dropZoneRef}
                         onDragEnter={handleDragEnter}
                         onDragLeave={handleDragLeave}
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
-                        className={`m-3 p-4 border-2 border-dashed rounded-xl transition-all cursor-pointer ${isDragging
+                        className={`mx-3 mt-3 mb-2 px-3 py-2 border border-dashed rounded-lg transition-all cursor-pointer flex items-center gap-2 ${isDragging
                             ? 'border-blue-500 bg-blue-50'
                             : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
                             }`}
                         onClick={() => fileInputRef.current?.click()}
                     >
-                        <div className="flex flex-col items-center text-center">
-                            <Upload className={`w-8 h-8 mb-2 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`} />
-                            {isDragging ? (
-                                <span className="text-sm font-bold text-blue-600">Drop files here!</span>
-                            ) : (
-                                <>
-                                    <span className="text-sm font-bold text-gray-600">Drag & Drop Files</span>
-                                    <span className="text-xs text-gray-400 mt-1">or click to browse</span>
-                                </>
-                            )}
-                            <span className="text-[10px] text-gray-400 mt-2">
-                                PDF, DOC, XLS, JPG, PNG, ZIP...
-                            </span>
-                            <span className="text-[10px] text-gray-400">
-                                Max 25MB per file
-                            </span>
-                        </div>
+                        <Upload className={`w-4 h-4 flex-shrink-0 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`} />
+                        <span className={`text-xs flex-grow ${isDragging ? 'font-bold text-blue-600' : 'text-gray-500'}`}>
+                            {isDragging ? 'Drop files here!' : 'Drop files or click to upload'}
+                        </span>
+                        <span className="text-[10px] text-gray-400 flex-shrink-0">Max 25MB</span>
                     </div>
 
                     {/* Upload Progress */}
                     {Object.keys(uploadProgress).length > 0 && (
-                        <div className="px-3 pb-3">
+                        <div className="px-3 pb-2">
                             {Object.entries(uploadProgress).map(([id, progress]) => (
-                                <div key={id} className="bg-gray-100 rounded-full h-2 overflow-hidden">
+                                <div key={id} className="bg-gray-100 rounded-full h-1.5 overflow-hidden">
                                     <div
                                         className="bg-blue-500 h-full transition-all duration-300"
                                         style={{ width: `${progress}%` }}
@@ -816,14 +817,28 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
                         </div>
                     )}
 
-                    {/* File List */}
-                    <div className="flex-grow overflow-y-auto">
+                    {/* Collapsible Document Dropdown */}
+                    <div style={{ borderTop: '1px solid #E0E0E0' }}>
+                        <button
+                            onClick={() => setDocsExpanded(!docsExpanded)}
+                            className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                            type="button"
+                        >
+                            <span className="font-bold text-xs text-gray-500 uppercase tracking-wider">
+                                Documents ({(project.techPackFiles || []).length})
+                            </span>
+                            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${docsExpanded ? 'rotate-180' : ''}`} />
+                        </button>
+                    </div>
+
+                    {/* File List (collapsible) */}
+                    <div className={`flex-grow overflow-y-auto transition-all duration-200 ${docsExpanded ? '' : 'hidden'}`}>
                         {(project.techPackFiles || []).length === 0 ? (
-                            <div className="p-4 text-center text-gray-400 text-sm">
+                            <div className="px-4 py-3 text-center text-gray-400 text-xs">
                                 No files uploaded yet
                             </div>
                         ) : (
-                            (project.techPackFiles || []).map(file => {
+                            (project.techPackFiles || []).map((file, index) => {
                                 const config = getFileTypeConfig(file.fileType || 'default');
                                 const IconComponent = config.icon;
                                 const hasError = !!fileErrors[file.id];
@@ -832,36 +847,35 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
                                     <div
                                         key={file.id}
                                         onClick={() => setActiveFileId(file.id)}
-                                        className={`p-3 border-b border-gray-100 cursor-pointer group ${activeFileId === file.id
-                                            ? 'bg-blue-50 border-l-4 border-l-blue-500'
+                                        className={`px-4 py-2.5 cursor-pointer group transition-colors ${activeFileId === file.id
+                                            ? 'bg-blue-50 border-l-[3px] border-l-blue-500'
                                             : hasError
                                                 ? 'bg-red-50 hover:bg-red-100'
                                                 : 'hover:bg-gray-50'
                                             }`}
+                                        style={{ borderBottom: '1px solid #F0F0F0' }}
                                     >
-                                        <div className="flex items-start gap-3">
+                                        <div className="flex items-center gap-2.5">
                                             {hasError ? (
-                                                <AlertTriangle className="w-5 h-5 mt-0.5 text-red-500" />
+                                                <AlertTriangle className="w-4 h-4 flex-shrink-0 text-red-500" />
                                             ) : (
-                                                <IconComponent className={`w-5 h-5 mt-0.5 ${config.color}`} />
+                                                <IconComponent className={`w-4 h-4 flex-shrink-0 ${config.color}`} />
                                             )}
                                             <div className="flex-grow min-w-0">
-                                                <div className={`text-sm font-bold truncate ${hasError ? 'text-red-700' : 'text-gray-700'}`}>
-                                                    {file.name}
+                                                <div className={`text-xs font-bold truncate ${hasError ? 'text-red-700' : 'text-gray-700'}`}>
+                                                    Version {index + 1} — {file.name}
                                                 </div>
-                                                <div className="text-[10px] text-gray-400">{file.fileName || 'Unknown file'}</div>
                                                 {hasError ? (
-                                                    <div className="text-[10px] text-red-500 mt-1 font-medium">
-                                                        ⚠ Load error
-                                                    </div>
+                                                    <div className="text-[10px] text-red-500 font-medium">⚠ Load error</div>
                                                 ) : (
-                                                    <div className="text-[10px] text-gray-400 flex items-center gap-2 mt-1">
-                                                        <span className="bg-gray-100 px-1.5 py-0.5 rounded">{config.label}</span>
+                                                    <div className="text-[10px] text-gray-400 flex items-center gap-1.5">
+                                                        <span>{config.label}</span>
+                                                        <span>·</span>
                                                         <span>{formatFileSize(file.fileSize || 0)}</span>
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                                                 <button
                                                     onClick={(e) => handleDownload(file, e)}
                                                     className="p-1 text-gray-400 hover:text-blue-500"

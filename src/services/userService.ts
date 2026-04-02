@@ -71,83 +71,78 @@ export async function getUser(userId: string): Promise<UserProfile | null> {
  */
 export async function createUser(userData: CreateUserData): Promise<{ user: UserProfile | null; error: string | null }> {
     try {
-        // Create user in Supabase Auth
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        // -------------------------------------------------------
+        // 1. Capture the current admin session so we can restore it
+        //    after supabase.auth.signUp (which signs in as the new user).
+        // -------------------------------------------------------
+        const { data: { session: adminSession } } = await supabase.auth.getSession();
+
+        // -------------------------------------------------------
+        // 2. Create the auth user via signUp
+        //    supabase.auth.admin.createUser requires the service_role key
+        //    which is NOT available on the client, so we always use signUp.
+        // -------------------------------------------------------
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: userData.email,
             password: userData.password,
-            email_confirm: true,
-            user_metadata: {
-                full_name: userData.name,
-                role: userData.role,
+            options: {
+                data: {
+                    full_name: userData.name,
+                    role: userData.role,
+                },
             },
         });
 
-        if (authError) {
-            // Fallback: Try regular signup (may require email confirmation)
-            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-                email: userData.email,
-                password: userData.password,
-                options: {
-                    data: {
-                        full_name: userData.name,
-                        role: userData.role,
-                    },
-                },
-            });
-
-            if (signUpError) {
-                return { user: null, error: signUpError.message };
-            }
-
-            if (!signUpData.user) {
-                return { user: null, error: 'Failed to create user' };
-            }
-
-            // Update profile with additional data
-            const sectionAccess = userData.section_access
-                ? { ...DEFAULT_ROLE_ACCESS[userData.role], ...userData.section_access }
-                : DEFAULT_ROLE_ACCESS[userData.role];
-
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .update({
-                    name: userData.name,
-                    role: userData.role,
-                    factory_id: userData.factory_id,
-                    section_access: sectionAccess,
-                    phone: userData.phone,
-                })
-                .eq('id', signUpData.user.id);
-
-            if (profileError) {
-                console.error('Profile update error:', profileError);
-            }
-
-            const profile = await getUser(signUpData.user.id);
-            return { user: profile, error: null };
+        if (signUpError) {
+            return { user: null, error: signUpError.message };
         }
 
-        if (!authData.user) {
+        if (!signUpData.user) {
             return { user: null, error: 'Failed to create user' };
         }
 
-        // Profile is created by trigger, but update with custom section access
+        const newUserId = signUpData.user.id;
+
+        // -------------------------------------------------------
+        // 3. Restore admin session immediately
+        //    signUp may have switched the active session to the new user.
+        // -------------------------------------------------------
+        if (adminSession) {
+            await supabase.auth.setSession({
+                access_token: adminSession.access_token,
+                refresh_token: adminSession.refresh_token,
+            });
+        }
+
+        // -------------------------------------------------------
+        // 4. Create / update the profile
+        //    The handle_new_user trigger may have already created a basic
+        //    profile, so we upsert to set the correct role, name, etc.
+        // -------------------------------------------------------
         const sectionAccess = userData.section_access
             ? { ...DEFAULT_ROLE_ACCESS[userData.role], ...userData.section_access }
             : DEFAULT_ROLE_ACCESS[userData.role];
 
-        await supabase
+        const { error: upsertError } = await supabase
             .from('profiles')
-            .update({
+            .upsert({
+                id: newUserId,
+                email: userData.email,
                 name: userData.name,
                 role: userData.role,
-                factory_id: userData.factory_id,
+                factory_id: userData.factory_id || null,
                 section_access: sectionAccess,
-                phone: userData.phone,
-            })
-            .eq('id', authData.user.id);
+                phone: userData.phone || null,
+                is_active: true,
+                updated_at: new Date().toISOString(),
+            }, { onConflict: 'id' });
 
-        const profile = await getUser(authData.user.id);
+        if (upsertError) {
+            console.error('Profile upsert error:', upsertError);
+            // Still return success — the auth user was created
+        }
+
+        const profile = await getUser(newUserId);
         return { user: profile, error: null };
     } catch (err) {
         console.error('Create user error:', err);

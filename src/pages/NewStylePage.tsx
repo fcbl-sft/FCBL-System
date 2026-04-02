@@ -34,6 +34,7 @@ const NewStylePage: React.FC = () => {
     // Color picker state
     const [showColorPicker, setShowColorPicker] = useState(false);
     const [newColor, setNewColor] = useState('#3B82F6');
+    const [newColorName, setNewColorName] = useState('');
 
     // Saving state
     const [isSaving, setIsSaving] = useState(false);
@@ -57,11 +58,12 @@ const NewStylePage: React.FC = () => {
         const newColorObj: ProductColor = {
             id: `color-${Date.now()}`,
             hex: newColor,
-            name: ''
+            name: newColorName.trim() || undefined
         };
         setProductColors([...productColors, newColorObj]);
         setShowColorPicker(false);
         setNewColor('#3B82F6');
+        setNewColorName('');
     };
 
     const handleDeleteColor = (colorId: string) => {
@@ -97,10 +99,6 @@ const NewStylePage: React.FC = () => {
     };
 
     const handleDeletePO = (poId: string) => {
-        if (poNumbers.length <= 1) {
-            alert('At least one PO number is required');
-            return;
-        }
         setPoNumbers(poNumbers.filter(po => po.id !== poId));
     };
 
@@ -109,21 +107,8 @@ const NewStylePage: React.FC = () => {
         navigate(ROUTES.DASHBOARD);
     };
 
-    // Validation
-    const isFormValid = () => {
-        return title.trim() !== '' &&
-            brand.trim() !== '' &&
-            team.trim() !== '' &&
-            factoryName.trim() !== '' &&
-            poNumbers.some(po => po.number.trim() !== '');
-    };
-
     // Create style handler
     const handleCreate = async () => {
-        if (!isFormValid()) {
-            alert('Please fill in all required fields');
-            return;
-        }
 
         setIsSaving(true);
 
@@ -138,10 +123,10 @@ const NewStylePage: React.FC = () => {
             const validPoNumbers = poNumbers.filter(po => po.number.trim() !== '');
 
             const newProject = await createProject({
-                title: title.trim(),
-                brand: brand.trim(),
-                team: team.trim(),
-                factoryName: factoryName.trim(),
+                title: title.trim() || 'Untitled Style',
+                brand: brand.trim() || undefined,
+                team: team.trim() || undefined,
+                factoryName: factoryName.trim() || undefined,
                 productImage: productImage || undefined,
                 productColors,
                 poNumbers: validPoNumbers.length > 0 ? validPoNumbers : [{ id: `po-${Date.now()}`, number: 'N/A' }],
@@ -186,7 +171,7 @@ const NewStylePage: React.FC = () => {
                     {/* Style Name */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Style Name <span className="text-red-500">*</span>
+                            Style Name
                         </label>
                         <input
                             type="text"
@@ -200,7 +185,7 @@ const NewStylePage: React.FC = () => {
                     {/* Brand */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Brand <span className="text-red-500">*</span>
+                            Brand
                         </label>
                         <input
                             type="text"
@@ -214,7 +199,7 @@ const NewStylePage: React.FC = () => {
                     {/* Team */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Team <span className="text-red-500">*</span>
+                            Team
                         </label>
                         <input
                             type="text"
@@ -228,7 +213,7 @@ const NewStylePage: React.FC = () => {
                     {/* Factory Name */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Factory Name <span className="text-red-500">*</span>
+                            Factory Name
                         </label>
                         <input
                             type="text"
@@ -243,7 +228,7 @@ const NewStylePage: React.FC = () => {
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <label className="block text-sm font-medium text-gray-700">
-                                PO Numbers <span className="text-red-500">*</span>
+                                PO Numbers
                             </label>
                             <button
                                 onClick={() => setShowAddPO(true)}
@@ -377,55 +362,74 @@ const NewStylePage: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Colors
                         </label>
-                        <div className="flex flex-wrap items-center gap-2">
-                            {productColors.map(color => (
-                                <div
-                                    key={color.id}
-                                    className="relative group"
-                                >
+                        {/* Added Colors List */}
+                        {productColors.length > 0 && (
+                            <div className="space-y-2 mb-3">
+                                {productColors.map(color => (
                                     <div
-                                        className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
-                                        style={{ backgroundColor: color.hex }}
-                                        title={color.name || color.hex}
-                                    />
-                                    <button
-                                        onClick={() => handleDeleteColor(color.id)}
-                                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                        key={color.id}
+                                        className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded border border-gray-200"
                                     >
-                                        <X className="w-2.5 h-2.5 text-white" />
-                                    </button>
-                                </div>
-                            ))}
-                            {showColorPicker ? (
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="color"
-                                        value={newColor}
-                                        onChange={e => setNewColor(e.target.value)}
-                                        className="w-8 h-8 cursor-pointer border-0"
-                                    />
-                                    <button
-                                        onClick={handleAddColor}
-                                        className="px-2 py-1 btn-primary text-xs rounded"
-                                    >
-                                        Add
-                                    </button>
-                                    <button
-                                        onClick={() => setShowColorPicker(false)}
-                                        className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            ) : (
+                                        <div
+                                            className="w-6 h-6 rounded border border-gray-300 flex-shrink-0"
+                                            style={{ backgroundColor: color.hex }}
+                                        />
+                                        <span className="text-sm font-mono text-gray-500">{color.hex}</span>
+                                        {color.name && (
+                                            <>
+                                                <span className="text-gray-400">—</span>
+                                                <span className="text-sm font-medium text-gray-700">{color.name}</span>
+                                            </>
+                                        )}
+                                        <button
+                                            onClick={() => handleDeleteColor(color.id)}
+                                            className="ml-auto p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                            title="Remove color"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Color Picker */}
+                        {showColorPicker ? (
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <input
+                                    type="color"
+                                    value={newColor}
+                                    onChange={e => setNewColor(e.target.value)}
+                                    className="w-10 h-10 cursor-pointer border border-gray-300 rounded"
+                                />
+                                <input
+                                    type="text"
+                                    value={newColorName}
+                                    onChange={e => setNewColorName(e.target.value)}
+                                    className="flex-1 min-w-[180px] px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                    placeholder="Color Name (e.g., Black, Navy Blue)"
+                                />
                                 <button
-                                    onClick={() => setShowColorPicker(true)}
-                                    className="w-8 h-8 rounded border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-gray-400 transition-colors"
+                                    onClick={handleAddColor}
+                                    className="px-3 py-2 btn-primary text-xs rounded"
                                 >
-                                    <Plus className="w-4 h-4 text-gray-400" />
+                                    Add
                                 </button>
-                            )}
-                        </div>
+                                <button
+                                    onClick={() => { setShowColorPicker(false); setNewColorName(''); }}
+                                    className="px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setShowColorPicker(true)}
+                                className="w-8 h-8 rounded border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-gray-400 transition-colors"
+                            >
+                                <Plus className="w-4 h-4 text-gray-400" />
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -439,7 +443,7 @@ const NewStylePage: React.FC = () => {
                     </button>
                     <button
                         onClick={handleCreate}
-                        disabled={!isFormValid() || isSaving}
+                        disabled={isSaving}
                         className="px-4 py-2 btn-primary text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isSaving ? 'Creating...' : 'Create Style'}

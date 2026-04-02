@@ -67,12 +67,14 @@ function mapSupabaseUser(supabaseUser: any, profile?: UserProfile | null): User 
     const metadata = supabaseUser.user_metadata || {};
 
     // Use profile data if available, otherwise fall back to metadata
-    const role: UserRole = profile?.role || (metadata.role as UserRole) || 'viewer';
+    // Normalize to lowercase — DB may store 'Admin', 'ADMIN' etc. but constants use 'admin'
+    const rawRole = (profile?.role || metadata.role || 'viewer');
+    const role: UserRole = (typeof rawRole === 'string' ? rawRole.toLowerCase() : 'viewer') as UserRole;
 
     // Validate section_access from the profile:
     // It MUST be a non-null object (not an array) with SectionId keys.
     // If it's null, undefined, empty, or wrong format → use role defaults.
-    let sectionAccess = DEFAULT_ROLE_ACCESS[role];
+    let sectionAccess = DEFAULT_ROLE_ACCESS[role] || DEFAULT_ROLE_ACCESS['viewer'];
     const rawAccess = profile?.section_access;
 
     if (rawAccess && typeof rawAccess === 'object' && !Array.isArray(rawAccess)) {

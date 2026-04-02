@@ -47,7 +47,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // ================================================
 
 function buildUser(authUser: any, profile: UserProfile): User {
-    const role = profile.role as UserRole;
+    // Normalize role to lowercase — DB may store 'Admin', 'ADMIN', 'admin' etc.
+    const rawRole = (profile.role || 'viewer').toLowerCase() as UserRole;
+    const role = rawRole;
     let sectionAccess: SectionAccessMap = DEFAULT_ROLE_ACCESS[role] || DEFAULT_ROLE_ACCESS['viewer'];
 
     const rawAccess = profile.section_access;
