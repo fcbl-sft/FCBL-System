@@ -18,9 +18,15 @@ const NewStylePage: React.FC = () => {
 
     // Form state
     const [title, setTitle] = useState('');
+    const [articleNumber, setArticleNumber] = useState('');
+    const [styleNumber, setStyleNumber] = useState('');
+    const [description, setDescription] = useState('');
     const [brand, setBrand] = useState('');
     const [team, setTeam] = useState('');
     const [factoryName, setFactoryName] = useState('');
+    const [poReceiveDate, setPoReceiveDate] = useState('');
+    const [shipmentDate, setShipmentDate] = useState('');
+    const [fob, setFob] = useState('');
     const [productImage, setProductImage] = useState('');
     const [productColors, setProductColors] = useState<ProductColor[]>([]);
     const [poNumbers, setPoNumbers] = useState<PONumber[]>([{ id: `po-${Date.now()}`, number: '' }]);
@@ -124,9 +130,15 @@ const NewStylePage: React.FC = () => {
 
             const newProject = await createProject({
                 title: title.trim() || 'Untitled Style',
+                articleNumber: articleNumber.trim() || undefined,
+                styleNumber: styleNumber.trim() || undefined,
+                description: description.trim() || undefined,
                 brand: brand.trim() || undefined,
                 team: team.trim() || undefined,
                 factoryName: factoryName.trim() || undefined,
+                poReceiveDate: poReceiveDate || undefined,
+                shipmentDate: shipmentDate || undefined,
+                fob: fob.trim() || undefined,
                 productImage: productImage || undefined,
                 productColors,
                 poNumbers: validPoNumbers.length > 0 ? validPoNumbers : [{ id: `po-${Date.now()}`, number: 'N/A' }],
@@ -168,17 +180,62 @@ const NewStylePage: React.FC = () => {
             {/* Form Content */}
             <div className="max-w-2xl mx-auto px-6 py-8">
                 <div className="space-y-6">
-                    {/* Style Name */}
+                    {/* Style Name + Article Number (same row) */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Style Name
+                            </label>
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={e => setTitle(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                placeholder="Enter style name"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Article Number
+                            </label>
+                            <input
+                                type="text"
+                                value={articleNumber}
+                                onChange={e => setArticleNumber(e.target.value)}
+                                maxLength={50}
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                placeholder="Enter article number"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Style Number */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Style Name
+                            Style Number
                         </label>
                         <input
                             type="text"
-                            value={title}
-                            onChange={e => setTitle(e.target.value)}
+                            value={styleNumber}
+                            onChange={e => setStyleNumber(e.target.value)}
+                            maxLength={50}
                             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
-                            placeholder="Enter style name"
+                            placeholder="Enter style number"
+                        />
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Description
+                        </label>
+                        <textarea
+                            value={description}
+                            onChange={e => setDescription(e.target.value)}
+                            maxLength={500}
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent resize-none"
+                            placeholder="Enter short description of the style"
                         />
                     </div>
 
@@ -221,6 +278,46 @@ const NewStylePage: React.FC = () => {
                             onChange={e => setFactoryName(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
                             placeholder="Enter factory name"
+                        />
+                    </div>
+
+                    {/* PO Receive Date + Shipment Date (same row) */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                PO Receive Date
+                            </label>
+                            <input
+                                type="date"
+                                value={poReceiveDate}
+                                onChange={e => setPoReceiveDate(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Shipment Date
+                            </label>
+                            <input
+                                type="date"
+                                value={shipmentDate}
+                                onChange={e => setShipmentDate(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                            />
+                        </div>
+                    </div>
+
+                    {/* FOB */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            FOB (Free on Board)
+                        </label>
+                        <input
+                            type="text"
+                            value={fob}
+                            onChange={e => setFob(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                            placeholder="Enter FOB value (e.g., $12.50)"
                         />
                     </div>
 

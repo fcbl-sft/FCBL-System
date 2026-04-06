@@ -643,6 +643,12 @@ export interface Project {
   factoryName?: string; // Factory name for the style
   productImage?: string;  // Product thumbnail URL for dashboard cards
   productColors?: ProductColor[];  // Color swatches for card display
+  articleNumber?: string;   // Article number for the style
+  styleNumber?: string;     // Style number for the style
+  description?: string;     // Short description of the style
+  poReceiveDate?: string;   // PO receive date (ISO date string)
+  shipmentDate?: string;    // Project-level shipment date (ISO date string)
+  fob?: string;             // FOB (Free on Board) value
   poNumbers: PONumber[];
   createdAt?: string;  // Creation timestamp (for NEW badge)
   updatedAt: string;

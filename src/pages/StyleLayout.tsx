@@ -164,7 +164,49 @@ const StyleLayout: React.FC = () => {
                     <h1 style={{ fontWeight: 700, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#000000' }}>
                         {project.title}
                     </h1>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {project.styleNumber && (
+                            <span
+                                style={{
+                                    padding: '2px 8px',
+                                    fontSize: '10px',
+                                    fontWeight: 600,
+                                    color: '#333333',
+                                    border: '1px solid #E0E0E0',
+                                    backgroundColor: '#F9F9F9'
+                                }}
+                            >
+                                Style#: {project.styleNumber}
+                            </span>
+                        )}
+                        {project.articleNumber && (
+                            <span
+                                style={{
+                                    padding: '2px 8px',
+                                    fontSize: '10px',
+                                    fontWeight: 600,
+                                    color: '#333333',
+                                    border: '1px solid #E0E0E0',
+                                    backgroundColor: '#F9F9F9'
+                                }}
+                            >
+                                Art#: {project.articleNumber}
+                            </span>
+                        )}
+                        {project.fob && (
+                            <span
+                                style={{
+                                    padding: '2px 8px',
+                                    fontSize: '10px',
+                                    fontWeight: 600,
+                                    color: '#2D8A4E',
+                                    border: '1px solid #C8E6C9',
+                                    backgroundColor: '#E8F5E9'
+                                }}
+                            >
+                                FOB: {project.fob}
+                            </span>
+                        )}
                         {project.poNumbers?.slice(0, 3).map(po => (
                             <span
                                 key={po.id}

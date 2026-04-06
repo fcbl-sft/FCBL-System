@@ -281,6 +281,52 @@ const SummaryContent: React.FC = () => {
                             {project.brand || 'No Brand'} · {project.team || 'No Team'}
                         </p>
 
+                        {/* Style Details */}
+                        <div className="space-y-2 mb-3">
+                            {project.styleNumber && (
+                                <div>
+                                    <p className="text-xs text-gray-400 uppercase tracking-wide">Style #</p>
+                                    <p className="text-sm text-gray-700 font-medium">{project.styleNumber}</p>
+                                </div>
+                            )}
+                            {project.articleNumber && (
+                                <div>
+                                    <p className="text-xs text-gray-400 uppercase tracking-wide">Article #</p>
+                                    <p className="text-sm text-gray-700 font-medium">{project.articleNumber}</p>
+                                </div>
+                            )}
+                            {project.description && (
+                                <div>
+                                    <p className="text-xs text-gray-400 uppercase tracking-wide">Description</p>
+                                    <p className="text-sm text-gray-700">{project.description}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Dates & FOB */}
+                        {(project.poReceiveDate || project.shipmentDate || project.fob) && (
+                            <div className="border-t border-gray-100 pt-3 mt-3 space-y-2 mb-3">
+                                {project.poReceiveDate && (
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-gray-400 uppercase tracking-wide">PO Receive</span>
+                                        <span className="text-xs text-gray-700 font-medium">{formatDate(project.poReceiveDate)}</span>
+                                    </div>
+                                )}
+                                {project.shipmentDate && (
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-gray-400 uppercase tracking-wide">Shipment</span>
+                                        <span className="text-xs text-gray-700 font-medium">{formatDate(project.shipmentDate)}</span>
+                                    </div>
+                                )}
+                                {project.fob && (
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-gray-400 uppercase tracking-wide">FOB</span>
+                                        <span className="text-xs text-gray-700 font-medium">{project.fob}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Color Swatches */}
                         {project.productColors && project.productColors.length > 0 && (
                             <div className="flex gap-1 mb-4">
@@ -299,7 +345,7 @@ const SummaryContent: React.FC = () => {
                         <div className="border-t border-gray-100 pt-3 mt-3">
                             <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Supplier</p>
                             <p className="text-sm text-gray-700">
-                                {project.orderSheet?.factoryName || 'Not specified'}
+                                {project.factoryName || project.orderSheet?.factoryName || 'Not specified'}
                             </p>
                         </div>
 

@@ -20,9 +20,15 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
 }) => {
     // Form state
     const [title, setTitle] = useState(project.title);
+    const [articleNumber, setArticleNumber] = useState(project.articleNumber || '');
+    const [styleNumber, setStyleNumber] = useState(project.styleNumber || '');
+    const [description, setDescription] = useState(project.description || '');
     const [brand, setBrand] = useState(project.brand || '');
     const [team, setTeam] = useState(project.team || '');
     const [factoryName, setFactoryName] = useState(project.factoryName || '');
+    const [poReceiveDate, setPoReceiveDate] = useState(project.poReceiveDate || '');
+    const [shipmentDate, setShipmentDate] = useState(project.shipmentDate || '');
+    const [fob, setFob] = useState(project.fob || '');
     const [status, setStatus] = useState<ProjectStatus>(project.status);
     const [mainStatus, setMainStatus] = useState<MainStatus>(project.mainStatus || 'DEVELOPMENT');
     const [productImage, setProductImage] = useState(project.productImage || '');
@@ -44,9 +50,15 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
     // Reset form when project changes
     useEffect(() => {
         setTitle(project.title);
+        setArticleNumber(project.articleNumber || '');
+        setStyleNumber(project.styleNumber || '');
+        setDescription(project.description || '');
         setBrand(project.brand || '');
         setTeam(project.team || '');
         setFactoryName(project.factoryName || '');
+        setPoReceiveDate(project.poReceiveDate || '');
+        setShipmentDate(project.shipmentDate || '');
+        setFob(project.fob || '');
         setStatus(project.status);
         setMainStatus(project.mainStatus || 'DEVELOPMENT');
         setProductImage(project.productImage || '');
@@ -124,9 +136,15 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
     const handleSave = () => {
         onSave({
             title,
+            articleNumber: articleNumber || undefined,
+            styleNumber: styleNumber || undefined,
+            description: description || undefined,
             brand: brand || undefined,
             team: team || undefined,
             factoryName: factoryName || undefined,
+            poReceiveDate: poReceiveDate || undefined,
+            shipmentDate: shipmentDate || undefined,
+            fob: fob || undefined,
             status,
             mainStatus,
             productImage: productImage || undefined,
@@ -158,17 +176,62 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
 
                 {/* Content */}
                 <div className="px-6 py-5 space-y-5">
-                    {/* Style Name */}
+                    {/* Style Name + Article Number (same row) */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Style Name
+                            </label>
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={e => setTitle(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                placeholder="Enter style name"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Article Number
+                            </label>
+                            <input
+                                type="text"
+                                value={articleNumber}
+                                onChange={e => setArticleNumber(e.target.value)}
+                                maxLength={50}
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                placeholder="Enter article number"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Style Number */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Style Name
+                            Style Number
                         </label>
                         <input
                             type="text"
-                            value={title}
-                            onChange={e => setTitle(e.target.value)}
+                            value={styleNumber}
+                            onChange={e => setStyleNumber(e.target.value)}
+                            maxLength={50}
                             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
-                            placeholder="Enter style name"
+                            placeholder="Enter style number"
+                        />
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Description
+                        </label>
+                        <textarea
+                            value={description}
+                            onChange={e => setDescription(e.target.value)}
+                            maxLength={500}
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent resize-none"
+                            placeholder="Enter short description of the style"
                         />
                     </div>
 
@@ -211,6 +274,46 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
                             onChange={e => setFactoryName(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
                             placeholder="Enter factory name"
+                        />
+                    </div>
+
+                    {/* PO Receive Date + Shipment Date (same row) */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                PO Receive Date
+                            </label>
+                            <input
+                                type="date"
+                                value={poReceiveDate}
+                                onChange={e => setPoReceiveDate(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Shipment Date
+                            </label>
+                            <input
+                                type="date"
+                                value={shipmentDate}
+                                onChange={e => setShipmentDate(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                            />
+                        </div>
+                    </div>
+
+                    {/* FOB */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            FOB (Free on Board)
+                        </label>
+                        <input
+                            type="text"
+                            value={fob}
+                            onChange={e => setFob(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                            placeholder="Enter FOB value (e.g., $12.50)"
                         />
                     </div>
 

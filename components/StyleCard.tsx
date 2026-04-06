@@ -32,14 +32,17 @@ const StyleCard: React.FC<StyleCardProps> = ({ project, onClick, onEdit, onDelet
         }
     };
 
-    // Get style code (first part of title or generate from ID)
-    const styleCode = project.title.split(' ')[0] || project.id.slice(-6).toUpperCase();
+    // Get style code - use styleNumber if available, fallback to first word of title or ID
+    const styleCode = project.styleNumber || project.title.split(' ')[0] || project.id.slice(-6).toUpperCase();
 
     // Get all PO numbers for display (comma-separated)
     const allPONumbers = project.poNumbers?.map(po => po.number).filter(Boolean).join(', ') || '';
 
-    // Style number format
-    const styleNumber = styleCode;
+    // Style number for card display
+    const displayStyleNumber = styleCode;
+
+    // Article number for card display
+    const displayArticleNumber = project.articleNumber || '';
 
     // Is this a new project? (created within last 7 days)
     const isNew = () => {
@@ -186,8 +189,22 @@ const StyleCard: React.FC<StyleCardProps> = ({ project, onClick, onEdit, onDelet
                         letterSpacing: '0.3px'
                     }}
                 >
-                    {styleNumber}
+                    {displayStyleNumber}
                 </div>
+
+                {/* Article Number - If available */}
+                {displayArticleNumber && (
+                    <div
+                        className="truncate mt-0.5"
+                        style={{
+                            fontSize: '10px',
+                            fontWeight: 500,
+                            color: '#555555',
+                        }}
+                    >
+                        Art: {displayArticleNumber}
+                    </div>
+                )}
 
                 {/* Description - Gray uppercase 11px truncated */}
                 <div
@@ -199,7 +216,7 @@ const StyleCard: React.FC<StyleCardProps> = ({ project, onClick, onEdit, onDelet
                         textTransform: 'uppercase'
                     }}
                 >
-                    {project.title}
+                    {project.description || project.title}
                 </div>
 
                 {/* PO Numbers - Show all comma-separated */}
