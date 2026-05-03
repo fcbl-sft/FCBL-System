@@ -22,5 +22,11 @@ def get_supabase() -> Client:
 def get_supabase_admin() -> Client:
     """Get Supabase client with service role key - bypasses RLS. Use only in trusted server-side code."""
     settings = get_settings()
-    key = settings.supabase_service_role_key or settings.supabase_anon_key
+    key = settings.supabase_service_role_key
+    if not key or key == "YOUR_SERVICE_ROLE_KEY_HERE":
+        raise RuntimeError(
+            "SUPABASE_SERVICE_ROLE_KEY is not configured. "
+            "Set it in backend/.env with the service_role key from your Supabase dashboard: "
+            "https://supabase.com/dashboard/project/zilbigcueizkfvvpuwjp/settings/api"
+        )
     return create_client(settings.supabase_url, key)

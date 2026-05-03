@@ -4,6 +4,7 @@
 import { supabase } from '../../lib/supabase';
 import { UserProfile, UserRole, SectionAccessMap } from '../../types';
 import { DEFAULT_ROLE_ACCESS } from '../constants/permissionConstants';
+import api from './api';
 
 export interface CreateUserData {
     email: string;
@@ -67,83 +68,27 @@ export async function getUser(userId: string): Promise<UserProfile | null> {
 
 /**
  * Create a new user (Admin only)
- * Uses Supabase Admin API via edge function or direct auth
+ * Calls the backend API which uses Supabase Admin API with service role key.
  */
 export async function createUser(userData: CreateUserData): Promise<{ user: UserProfile | null; error: string | null }> {
     try {
-        // -------------------------------------------------------
-        // 1. Capture the current admin session so we can restore it
-        //    after supabase.auth.signUp (which signs in as the new user).
-        // -------------------------------------------------------
-        const { data: { session: adminSession } } = await supabase.auth.getSession();
-
-        // -------------------------------------------------------
-        // 2. Create the auth user via signUp
-        //    supabase.auth.admin.createUser requires the service_role key
-        //    which is NOT available on the client, so we always use signUp.
-        // -------------------------------------------------------
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        const { data, error } = await api.post<{ user: UserProfile; error: string | null }>('/users', {
             email: userData.email,
             password: userData.password,
-            options: {
-                data: {
-                    full_name: userData.name,
-                    role: userData.role,
-                },
-            },
+            name: userData.name,
+            role: userData.role,
+            phone: userData.phone || null,
+            factory_id: userData.factory_id || null,
+            section_access: userData.section_access
+                ? { ...DEFAULT_ROLE_ACCESS[userData.role], ...userData.section_access }
+                : null,
         });
 
-        if (signUpError) {
-            return { user: null, error: signUpError.message };
+        if (error) {
+            return { user: null, error };
         }
 
-        if (!signUpData.user) {
-            return { user: null, error: 'Failed to create user' };
-        }
-
-        const newUserId = signUpData.user.id;
-
-        // -------------------------------------------------------
-        // 3. Restore admin session immediately
-        //    signUp may have switched the active session to the new user.
-        // -------------------------------------------------------
-        if (adminSession) {
-            await supabase.auth.setSession({
-                access_token: adminSession.access_token,
-                refresh_token: adminSession.refresh_token,
-            });
-        }
-
-        // -------------------------------------------------------
-        // 4. Create / update the profile
-        //    The handle_new_user trigger may have already created a basic
-        //    profile, so we upsert to set the correct role, name, etc.
-        // -------------------------------------------------------
-        const sectionAccess = userData.section_access
-            ? { ...DEFAULT_ROLE_ACCESS[userData.role], ...userData.section_access }
-            : DEFAULT_ROLE_ACCESS[userData.role];
-
-        const { error: upsertError } = await supabase
-            .from('profiles')
-            .upsert({
-                id: newUserId,
-                email: userData.email,
-                name: userData.name,
-                role: userData.role,
-                factory_id: userData.factory_id || null,
-                section_access: sectionAccess,
-                phone: userData.phone || null,
-                is_active: true,
-                updated_at: new Date().toISOString(),
-            }, { onConflict: 'id' });
-
-        if (upsertError) {
-            console.error('Profile upsert error:', upsertError);
-            // Still return success — the auth user was created
-        }
-
-        const profile = await getUser(newUserId);
-        return { user: profile, error: null };
+        return { user: data?.user || null, error: null };
     } catch (err) {
         console.error('Create user error:', err);
         return { user: null, error: 'Failed to create user' };
