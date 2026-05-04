@@ -667,42 +667,39 @@ export interface Project {
   materialAttachments?: FileAttachment[];
   materialComments?: Comment[];
   // Workflow fields for sections stored at project level
+  // (TechPack and MQ Control use top-level workflow; all others store workflow inside their nested section object)
   techPackWorkflow?: WorkflowFields;
   mqControlWorkflow?: WorkflowFields;
-  ppMeetingWorkflow?: WorkflowFields;
-  commercialWorkflow?: WorkflowFields;
-  qcInspectWorkflow?: WorkflowFields;
-  orderSheetWorkflow?: WorkflowFields;
-  consumptionWorkflow?: WorkflowFields;
-  packingWorkflow?: WorkflowFields;
 }
 
 /**
  * Count the number of sections with SUBMITTED (pending approval) status.
- * Checks both project-level workflow fields and nested section workflow objects.
+ * Each section is checked at its canonical storage location only — no double-counting.
+ *
+ * Canonical locations:
+ *  - TechPack      → project.techPackWorkflow
+ *  - MQ Control    → project.mqControlWorkflow
+ *  - OrderSheet    → project.orderSheet.workflow
+ *  - Consumption   → project.consumption.workflow
+ *  - Packing       → project.packing.workflow
+ *  - PP Meeting    → project.ppMeetings[last].workflow
+ *  - Invoice       → project.invoices[last].workflow
+ *  - Inspection    → project.inspections[last].workflow
  */
 export function getPendingTaskCount(project: Project): number {
   let count = 0;
-  // Project-level workflow fields
+  // Top-level workflow fields
   if (project.techPackWorkflow?.status === 'SUBMITTED') count++;
   if (project.mqControlWorkflow?.status === 'SUBMITTED') count++;
-  if (project.ppMeetingWorkflow?.status === 'SUBMITTED') count++;
-  if (project.commercialWorkflow?.status === 'SUBMITTED') count++;
-  if (project.qcInspectWorkflow?.status === 'SUBMITTED') count++;
-  if (project.orderSheetWorkflow?.status === 'SUBMITTED') count++;
-  if (project.consumptionWorkflow?.status === 'SUBMITTED') count++;
-  if (project.packingWorkflow?.status === 'SUBMITTED') count++;
-  // Nested section workflow objects (fallback / alternate storage)
+  // Nested section workflow objects (canonical locations)
   if (project.orderSheet?.workflow?.status === 'SUBMITTED') count++;
   if (project.consumption?.workflow?.status === 'SUBMITTED') count++;
   if (project.packing?.workflow?.status === 'SUBMITTED') count++;
-  // PP Meetings (check latest)
+  // Array-based sections — check latest item
   const latestPPM = project.ppMeetings?.[project.ppMeetings.length - 1];
   if (latestPPM?.workflow?.status === 'SUBMITTED') count++;
-  // Invoices (check latest)
   const latestInv = project.invoices?.[project.invoices.length - 1];
   if (latestInv?.workflow?.status === 'SUBMITTED') count++;
-  // Inspections (check latest)
   const latestInsp = project.inspections?.[project.inspections.length - 1];
   if (latestInsp?.workflow?.status === 'SUBMITTED') count++;
   return count;

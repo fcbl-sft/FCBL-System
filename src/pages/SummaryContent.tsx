@@ -2,7 +2,7 @@
  * Summary Content - Style overview page shown as default landing
  * Three-column layout: Product Info | Production Status | Approval Dashboard
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProjects } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
@@ -27,11 +27,16 @@ const APPROVER_ROLES = ['super_admin', 'admin', 'director'];
 
 const SummaryContent: React.FC = () => {
     const { id } = useParams<{ id: string }>();
-    const { getProject, updateProject } = useProjects();
+    const { getProject, updateProject, refreshProjects } = useProjects();
     const { userRole, user, profile } = useAuth();
     const project = id ? getProject(id) : undefined;
     const [rejectSection, setRejectSection] = useState<string | null>(null);
     const [rejectComment, setRejectComment] = useState('');
+
+    // Always fetch fresh data when Summary mounts — ensures we never show stale status
+    useEffect(() => {
+        refreshProjects();
+    }, [refreshProjects]);
 
     if (!project) {
         return <div className="p-6">Loading...</div>;
@@ -457,54 +462,89 @@ const SummaryContent: React.FC = () => {
                                         <div
                                             key={stage.key}
                                             onClick={() => navigate(stage.path)}
-                                            className="flex items-center py-2 border-t border-gray-100 cursor-pointer transition-colors"
+                                            className="py-2 border-t border-gray-100 cursor-pointer transition-colors"
                                             style={{
                                                 backgroundColor: isCurrent ? 'rgba(33,150,243,0.04)' : 'transparent',
                                             }}
                                             onMouseEnter={e => (e.currentTarget.style.backgroundColor = isCurrent ? 'rgba(33,150,243,0.08)' : '#f9fafb')}
                                             onMouseLeave={e => (e.currentTarget.style.backgroundColor = isCurrent ? 'rgba(33,150,243,0.04)' : 'transparent')}
                                         >
-                                            {/* Status Icon */}
-                                            <span
-                                                className="mr-2 flex-shrink-0 flex items-center justify-center"
-                                                style={{
-                                                    width: '16px',
-                                                    height: '16px',
-                                                    fontSize: isCompleted ? '12px' : '10px',
-                                                    color: isCompleted ? '#4CAF50' : (isCurrent || isInProgress) ? '#2196F3' : '#CCCCCC',
-                                                }}
-                                            >
-                                                {isCompleted ? '✓' : (isCurrent || isInProgress) ? '●' : '○'}
-                                            </span>
+                                            <div className="flex items-center">
+                                                {/* Status Icon */}
+                                                <span
+                                                    className="mr-2 flex-shrink-0 flex items-center justify-center"
+                                                    style={{
+                                                        width: '16px',
+                                                        height: '16px',
+                                                        fontSize: isCompleted ? '12px' : '10px',
+                                                        color: isCompleted ? '#4CAF50' : (isCurrent || isInProgress) ? '#2196F3' : '#CCCCCC',
+                                                    }}
+                                                >
+                                                    {isCompleted ? '✓' : (isCurrent || isInProgress) ? '●' : '○'}
+                                                </span>
 
-                                            {/* Stage Name */}
-                                            <span
-                                                className="text-xs uppercase tracking-wide flex-1"
-                                                style={{
-                                                    fontWeight: isCurrent ? 700 : isCompleted ? 600 : 400,
-                                                    color: isCompleted ? '#333' : (isCurrent || isInProgress) ? '#1565C0' : '#999',
-                                                }}
-                                            >
-                                                {stage.label}
-                                            </span>
+                                                {/* Stage Name */}
+                                                <span
+                                                    className="text-xs uppercase tracking-wide flex-1"
+                                                    style={{
+                                                        fontWeight: isCurrent ? 700 : isCompleted ? 600 : 400,
+                                                        color: isCompleted ? '#333' : (isCurrent || isInProgress) ? '#1565C0' : '#999',
+                                                    }}
+                                                >
+                                                    {stage.label}
+                                                </span>
 
-                                            {/* Status Text + Date */}
-                                            <span
-                                                className="text-[10px] text-right"
-                                                style={{
-                                                    color: isCompleted ? '#4CAF50' : (isCurrent || isInProgress) ? '#2196F3' : '#BBBBBB',
-                                                    fontWeight: isCurrent ? 600 : 400,
-                                                }}
-                                            >
-                                                {isCompleted
-                                                    ? (stage.workflow.approvedAt ? formatDate(stage.workflow.approvedAt) : 'Completed')
-                                                    : isCurrent
-                                                        ? '← Current'
-                                                        : isInProgress
-                                                            ? 'In Progress'
-                                                            : 'Pending'
-                                                }
-                                            </span>
+                                                {/* Status Text + Date */}
+                                                <span
+                                                    className="text-[10px] text-right"
+                                                    style={{
+                                                        color: isCompleted ? '#4CAF50' : (isCurrent || isInProgress) ? '#2196F3' : '#BBBBBB',
+                                                        fontWeight: isCurrent ? 600 : 400,
+                                                    }}
+                                                >
+                                                    {isCompleted
+                                                        ? (stage.workflow.approvedAt ? formatDate(stage.workflow.approvedAt) : 'Completed')
+                                                        : isCurrent
+                                                            ? '← Current'
+                                                            : isInProgress
+                                                                ? 'In Progress'
+                                                                : 'Pending'
+                                                    }
+                                                </span>
+                                            </div>
+
+                                            {/* Creator / Approver tracking info */}
+                                            {(stage.workflow.submittedBy || stage.workflow.approvedBy) && (
+                                                <div className="ml-[24px] mt-1 space-y-0.5">
+                                                    {stage.workflow.submittedBy && (
+                                                        <div className="text-[10px] text-gray-400 flex items-center gap-1">
+                                                            <FileEdit className="w-2.5 h-2.5" />
+                                                            <span>Created by: <span className="font-medium text-gray-500">{stage.workflow.submittedBy}</span></span>
+                                                            {stage.workflow.submittedAt && (
+                                                                <span className="text-gray-300">• {formatRelativeTime(stage.workflow.submittedAt)}</span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    {stage.workflow.approvedBy && (
+                                                        <div className="text-[10px] text-emerald-500 flex items-center gap-1">
+                                                            <CheckCircle className="w-2.5 h-2.5" />
+                                                            <span>Approved by: <span className="font-medium">{stage.workflow.approvedBy}</span></span>
+                                                            {stage.workflow.approvedAt && (
+                                                                <span className="text-emerald-400">• {formatRelativeTime(stage.workflow.approvedAt)}</span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    {stage.workflow.rejectedBy && stage.workflow.status === 'REJECTED' && (
+                                                        <div className="text-[10px] text-red-400 flex items-center gap-1">
+                                                            <XCircle className="w-2.5 h-2.5" />
+                                                            <span>Rejected by: <span className="font-medium">{stage.workflow.rejectedBy}</span></span>
+                                                            {stage.workflow.rejectedAt && (
+                                                                <span className="text-red-300">• {formatRelativeTime(stage.workflow.rejectedAt)}</span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -559,9 +599,34 @@ const SummaryContent: React.FC = () => {
                                 {SECTIONS.map(section => {
                                     const wf = getWorkflow(section.key);
                                     return (
-                                        <div key={section.key} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
-                                            <span className="text-xs text-gray-700">{section.label}</span>
-                                            <StatusBadge status={wf.status} size="sm" />
+                                        <div key={section.key} className="py-1.5 border-b border-gray-50 last:border-0">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs text-gray-700">{section.label}</span>
+                                                <StatusBadge status={wf.status} size="sm" />
+                                            </div>
+                                            {/* Creator/Approver info under each section */}
+                                            {(wf.submittedBy || wf.approvedBy || (wf.rejectedBy && wf.status === 'REJECTED')) && (
+                                                <div className="mt-1 ml-1 space-y-0.5">
+                                                    {wf.submittedBy && (
+                                                        <div className="text-[10px] text-gray-400">
+                                                            └─ Submitted by: <span className="font-medium text-gray-500">{wf.submittedBy}</span>
+                                                            {wf.submittedAt && <span> • {formatRelativeTime(wf.submittedAt)}</span>}
+                                                        </div>
+                                                    )}
+                                                    {wf.approvedBy && (
+                                                        <div className="text-[10px] text-emerald-500">
+                                                            └─ Approved by: <span className="font-medium">{wf.approvedBy}</span>
+                                                            {wf.approvedAt && <span> • {formatRelativeTime(wf.approvedAt)}</span>}
+                                                        </div>
+                                                    )}
+                                                    {wf.rejectedBy && wf.status === 'REJECTED' && (
+                                                        <div className="text-[10px] text-red-400">
+                                                            └─ Rejected by: <span className="font-medium">{wf.rejectedBy}</span>
+                                                            {wf.rejectionComment && <span> — "{wf.rejectionComment}"</span>}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}

@@ -21,7 +21,7 @@ const normalizePONumbers = (pos: any): PONumber[] => {
 /**
  * Map database row (snake_case) to Project type (camelCase)
  */
-const mapFromDb = (row: any): Project => ({
+export const mapFromDb = (row: any): Project => ({
     id: row.id,
     title: row.title,
     brand: row.brand || undefined,
@@ -54,12 +54,8 @@ const mapFromDb = (row: any): Project => ({
     materialComments: row.material_comments || [],
     techPackWorkflow: row.tech_pack_workflow || undefined,
     mqControlWorkflow: row.mq_control_workflow || undefined,
-    ppMeetingWorkflow: row.pp_meeting_workflow || undefined,
-    commercialWorkflow: row.commercial_workflow || undefined,
-    qcInspectWorkflow: row.qc_inspect_workflow || undefined,
-    orderSheetWorkflow: row.order_sheet_workflow || undefined,
-    consumptionWorkflow: row.consumption_workflow || undefined,
-    packingWorkflow: row.packing_workflow || undefined,
+    // Note: Other sections store workflow inside their nested JSONB object
+    // (e.g. order_sheet.workflow, consumption.workflow, packing.workflow)
 });
 
 /**
@@ -88,12 +84,6 @@ const mapToDb = (proj: Partial<Project>): Record<string, any> => {
         shipmentDate: 'shipment_date',
         techPackWorkflow: 'tech_pack_workflow',
         mqControlWorkflow: 'mq_control_workflow',
-        ppMeetingWorkflow: 'pp_meeting_workflow',
-        commercialWorkflow: 'commercial_workflow',
-        qcInspectWorkflow: 'qc_inspect_workflow',
-        orderSheetWorkflow: 'order_sheet_workflow',
-        consumptionWorkflow: 'consumption_workflow',
-        packingWorkflow: 'packing_workflow',
         mainStatus: 'main_status',
     };
 

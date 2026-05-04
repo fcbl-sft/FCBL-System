@@ -31,10 +31,18 @@ const ApprovalControls: React.FC<ApprovalControlsProps> = ({
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectionComment, setRejectionComment] = useState('');
     const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
+    // Toast notification state for auto-save feedback
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
 
     const canApprove = APPROVER_ROLES.includes(userRole);
     const canSubmit = SUBMITTER_ROLES.includes(userRole);
     const status = workflow.status;
+
+    // Show a brief auto-dismissing toast notification
+    const showToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     const createAction = (action: ApprovalAction['action'], comments?: string): ApprovalAction => ({
         id: `action-${Date.now()}`,
@@ -58,7 +66,9 @@ const ApprovalControls: React.FC<ApprovalControlsProps> = ({
             history: [...(workflow.history || []), createAction('SUBMIT')],
         };
         onWorkflowChange(updated);
+        onSave();
         setShowConfirmSubmit(false);
+        showToast(`${sectionLabel} submitted for approval`, 'success');
     };
 
     const handleRecall = () => {
@@ -70,6 +80,8 @@ const ApprovalControls: React.FC<ApprovalControlsProps> = ({
             history: [...(workflow.history || []), createAction('RECALL')],
         };
         onWorkflowChange(updated);
+        onSave();
+        showToast(`${sectionLabel} submission recalled`, 'info');
     };
 
     const handleApprove = () => {
@@ -81,6 +93,8 @@ const ApprovalControls: React.FC<ApprovalControlsProps> = ({
             history: [...(workflow.history || []), createAction('APPROVE')],
         };
         onWorkflowChange(updated);
+        onSave();
+        showToast(`${sectionLabel} approved ✓`, 'success');
     };
 
     const handleReject = () => {
@@ -96,8 +110,10 @@ const ApprovalControls: React.FC<ApprovalControlsProps> = ({
             history: [...(workflow.history || []), createAction('REJECT', rejectionComment.trim())],
         };
         onWorkflowChange(updated);
+        onSave();
         setShowRejectModal(false);
         setRejectionComment('');
+        showToast(`${sectionLabel} rejected`, 'error');
     };
 
     const handleRequestRevision = () => {
@@ -109,6 +125,8 @@ const ApprovalControls: React.FC<ApprovalControlsProps> = ({
             history: [...(workflow.history || []), createAction('REQUEST_REVISION')],
         };
         onWorkflowChange(updated);
+        onSave();
+        showToast(`${sectionLabel} revision requested`, 'info');
     };
 
     const formatDate = (iso?: string) => {
@@ -118,8 +136,43 @@ const ApprovalControls: React.FC<ApprovalControlsProps> = ({
         } catch { return iso; }
     };
 
+    // Toast colors
+    const toastColors = {
+        success: { bg: '#059669', border: '#047857' },
+        info: { bg: '#2563EB', border: '#1D4ED8' },
+        error: { bg: '#DC2626', border: '#B91C1C' },
+    };
+
     return (
         <>
+            {/* Auto-save Toast Notification */}
+            {toast && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: '20px',
+                        right: '20px',
+                        zIndex: 9999,
+                        backgroundColor: toastColors[toast.type].bg,
+                        border: `1px solid ${toastColors[toast.type].border}`,
+                        color: 'white',
+                        padding: '12px 20px',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        animation: 'slideIn 0.3s ease-out',
+                    }}
+                >
+                    <CheckCircle className="w-4 h-4" />
+                    <span>{toast.message}</span>
+                    <span style={{ opacity: 0.7, fontSize: '11px', marginLeft: '8px' }}>• Saved</span>
+                </div>
+            )}
+
             {/* Rejection Banner */}
             {status === 'REJECTED' && (
                 <div className="bg-red-50 border border-red-200 p-4 flex flex-col gap-1 no-print">

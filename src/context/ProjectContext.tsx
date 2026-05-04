@@ -3,9 +3,10 @@
  */
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { Project, Inspection, Invoice, PackingInfo, TechPackData, PPMeeting as PPMeetingType, ConsumptionData, OrderSheet } from '../../types';
-import { projectService } from '../services/projectService';
+import { projectService, mapFromDb } from '../services/projectService';
 import { INITIAL_DATA } from '../../constants';
 import { useAuth } from './AuthContext';
+import { supabase } from '../../lib/supabase';
 
 interface ProjectContextType {
     projects: Project[];
@@ -15,6 +16,7 @@ interface ProjectContextType {
     updateProject: (id: string, updates: Partial<Project>) => Promise<void>;
     deleteProject: (id: string) => Promise<void>;
     refreshProjects: () => Promise<Project[]>;
+    refreshProject: (id: string) => Promise<void>;
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
@@ -104,6 +106,58 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         fetchWithRetry();
     }, [isLoading, isAuthenticated, user, refreshProjects]);
 
+    // ================================================
+    // REAL-TIME SUBSCRIPTION
+    // Listen for any changes to the projects table and sync local state.
+    // This ensures all users see up-to-date data without manual refresh.
+    // ================================================
+    useEffect(() => {
+        if (!isAuthenticated || !user) return;
+
+        console.log('[ProjectContext] Setting up real-time subscription...');
+        const channel = supabase
+            .channel('projects-realtime')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'projects' },
+                (payload: any) => {
+                    console.log('[ProjectContext] Real-time event:', payload.eventType, payload.new?.id || payload.old?.id);
+
+                    if (payload.eventType === 'UPDATE' && payload.new) {
+                        try {
+                            const updated = mapFromDb(payload.new);
+                            setProjects(prev => prev.map(p => p.id === updated.id ? updated : p));
+                        } catch (err) {
+                            console.error('[ProjectContext] Error mapping real-time update:', err);
+                        }
+                    } else if (payload.eventType === 'INSERT' && payload.new) {
+                        try {
+                            const newProj = mapFromDb(payload.new);
+                            setProjects(prev => {
+                                // Avoid duplicates (e.g. if we already added it optimistically)
+                                if (prev.some(p => p.id === newProj.id)) {
+                                    return prev.map(p => p.id === newProj.id ? newProj : p);
+                                }
+                                return [newProj, ...prev];
+                            });
+                        } catch (err) {
+                            console.error('[ProjectContext] Error mapping real-time insert:', err);
+                        }
+                    } else if (payload.eventType === 'DELETE' && payload.old) {
+                        setProjects(prev => prev.filter(p => p.id !== payload.old.id));
+                    }
+                }
+            )
+            .subscribe((status: string) => {
+                console.log('[ProjectContext] Real-time subscription status:', status);
+            });
+
+        return () => {
+            console.log('[ProjectContext] Cleaning up real-time subscription');
+            supabase.removeChannel(channel);
+        };
+    }, [isAuthenticated, user]);
+
     const getProject = useCallback((id: string) => {
         return projects.find(p => p.id === id);
     }, [projects]);
@@ -188,6 +242,19 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
     }, []);
 
+    // Refresh a single project from the database (efficient single-row query)
+    const refreshProject = useCallback(async (id: string) => {
+        try {
+            const { data: fresh, error } = await projectService.getProject(id);
+            if (error) throw new Error(error);
+            if (fresh) {
+                setProjects(prev => prev.map(p => p.id === id ? fresh : p));
+            }
+        } catch (err: any) {
+            console.error("[ProjectContext] Error refreshing project:", err.message || err);
+        }
+    }, []);
+
     const value: ProjectContextType = {
         projects,
         loading,
@@ -196,6 +263,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         updateProject,
         deleteProject,
         refreshProjects,
+        refreshProject,
     };
 
     return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
