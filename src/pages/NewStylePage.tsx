@@ -31,6 +31,24 @@ const NewStylePage: React.FC = () => {
     const [productColors, setProductColors] = useState<ProductColor[]>([]);
     const [poNumbers, setPoNumbers] = useState<PONumber[]>([{ id: `po-${Date.now()}`, number: '' }]);
 
+    // Technical Specifications state
+    const [gauge, setGauge] = useState('');
+    const [yarn, setYarn] = useState('');
+    const [knittingTime, setKnittingTime] = useState('');
+    const [wash, setWash] = useState('');
+    const [embroideryPrint, setEmbroideryPrint] = useState('');
+    const [specialTrims, setSpecialTrims] = useState('');
+    const [bodyPly, setBodyPly] = useState('');
+    const [cuffBottomPly, setCuffBottomPly] = useState('');
+    const [neckPly, setNeckPly] = useState('');
+    const [sampleComment, setSampleComment] = useState('');
+
+    // Machine Information state
+    const [machineName, setMachineName] = useState('');
+    const [machineNo, setMachineNo] = useState('');
+    const [machineGauge, setMachineGauge] = useState('');
+    const [machineTypeNo, setMachineTypeNo] = useState('');
+
     // New PO form state
     const [showAddPO, setShowAddPO] = useState(false);
     const [newPONumber, setNewPONumber] = useState('');
@@ -139,6 +157,22 @@ const NewStylePage: React.FC = () => {
                 poReceiveDate: poReceiveDate || undefined,
                 shipmentDate: shipmentDate || undefined,
                 fob: fob.trim() || undefined,
+                // Technical Specifications
+                gauge: gauge.trim() || undefined,
+                yarn: yarn.trim() || undefined,
+                knittingTime: knittingTime.trim() || undefined,
+                wash: wash.trim() || undefined,
+                embroideryPrint: embroideryPrint.trim() || undefined,
+                specialTrims: specialTrims.trim() || undefined,
+                bodyPly: bodyPly.trim() || undefined,
+                cuffBottomPly: cuffBottomPly.trim() || undefined,
+                neckPly: neckPly.trim() || undefined,
+                sampleComment: sampleComment.trim() || undefined,
+                // Machine Information
+                machineName: machineName.trim() || undefined,
+                machineNo: machineNo.trim() || undefined,
+                machineGauge: machineGauge.trim() || undefined,
+                machineTypeNo: machineTypeNo.trim() || undefined,
                 productImage: productImage || undefined,
                 productColors,
                 poNumbers: validPoNumbers.length > 0 ? validPoNumbers : [{ id: `po-${Date.now()}`, number: 'N/A' }],
@@ -319,6 +353,174 @@ const NewStylePage: React.FC = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
                             placeholder="Enter FOB value (e.g., $12.50)"
                         />
+                    </div>
+
+                    {/* ── TECHNICAL SPECIFICATIONS ── */}
+                    <div className="border-t border-gray-200 pt-6 mt-2">
+                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+                            <span className="w-6 h-6 bg-green-600 text-white rounded flex items-center justify-center text-[10px] font-bold">TS</span>
+                            Technical Specifications
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Gauge</label>
+                                <input
+                                    type="text"
+                                    value={gauge}
+                                    onChange={e => setGauge(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                    placeholder="e.g., 7GG, 12GG, 14GG"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Yarn</label>
+                                <input
+                                    type="text"
+                                    value={yarn}
+                                    onChange={e => setYarn(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                    placeholder="e.g., 100% Cotton, Acrylic Blend"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Knitting Time</label>
+                                <input
+                                    type="text"
+                                    value={knittingTime}
+                                    onChange={e => setKnittingTime(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                    placeholder="e.g., 45 mins, 1.5 hours"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Wash</label>
+                                <select
+                                    value={wash}
+                                    onChange={e => setWash(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent bg-white"
+                                >
+                                    <option value="">Select wash type</option>
+                                    <option value="Normal Wash">Normal Wash</option>
+                                    <option value="Enzyme Wash">Enzyme Wash</option>
+                                    <option value="Garment Wash">Garment Wash</option>
+                                    <option value="Acid Wash">Acid Wash</option>
+                                    <option value="Stone Wash">Stone Wash</option>
+                                    <option value="Softener Wash">Softener Wash</option>
+                                    <option value="Silicon Wash">Silicon Wash</option>
+                                    <option value="No Wash">No Wash</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Embroidery / Print</label>
+                                <input
+                                    type="text"
+                                    value={embroideryPrint}
+                                    onChange={e => setEmbroideryPrint(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                    placeholder="e.g., Screen Print, Embroidery"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Special Trims</label>
+                                <input
+                                    type="text"
+                                    value={specialTrims}
+                                    onChange={e => setSpecialTrims(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                    placeholder="e.g., Metal buttons, zippers"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Body Ply</label>
+                                <input
+                                    type="text"
+                                    value={bodyPly}
+                                    onChange={e => setBodyPly(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                    placeholder="e.g., Single, Double"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Cuff / Bottom Ply</label>
+                                <input
+                                    type="text"
+                                    value={cuffBottomPly}
+                                    onChange={e => setCuffBottomPly(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                    placeholder="e.g., 1x1 Rib, 2x2 Rib"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Neck Ply</label>
+                                <input
+                                    type="text"
+                                    value={neckPly}
+                                    onChange={e => setNeckPly(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                    placeholder="e.g., V-Neck Rib, Crew Neck"
+                                />
+                            </div>
+                            <div className="col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Sample Comment</label>
+                                <textarea
+                                    value={sampleComment}
+                                    onChange={e => setSampleComment(e.target.value)}
+                                    rows={2}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent resize-none"
+                                    placeholder="Any notes about the sample..."
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── MACHINE INFORMATION ── */}
+                    <div className="border-t border-gray-200 pt-6 mt-2">
+                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+                            <span className="w-6 h-6 bg-gray-800 text-white rounded flex items-center justify-center text-[10px] font-bold">MI</span>
+                            Machine Information
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Machine Name</label>
+                                <input
+                                    type="text"
+                                    value={machineName}
+                                    onChange={e => setMachineName(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                    placeholder="e.g., Shima Seiki, Stoll"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Machine No</label>
+                                <input
+                                    type="text"
+                                    value={machineNo}
+                                    onChange={e => setMachineNo(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                    placeholder="e.g., M-001, M-045"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Machine Gauge</label>
+                                <input
+                                    type="text"
+                                    value={machineGauge}
+                                    onChange={e => setMachineGauge(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                    placeholder="e.g., 7GG, 12GG"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Machine Type No</label>
+                                <input
+                                    type="text"
+                                    value={machineTypeNo}
+                                    onChange={e => setMachineTypeNo(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                                    placeholder="e.g., SES-183S"
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     {/* PO Numbers */}

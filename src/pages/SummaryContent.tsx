@@ -361,6 +361,114 @@ const SummaryContent: React.FC = () => {
                                 Add contact members
                             </button>
                         </div>
+
+                        {/* Technical Specifications */}
+                        {(project.gauge || project.yarn || project.knittingTime || project.wash || project.embroideryPrint || project.specialTrims || project.bodyPly || project.cuffBottomPly || project.neckPly || project.sampleComment) && (
+                            <div className="border-t border-gray-100 pt-3 mt-3">
+                                <p className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                                    <span className="w-4 h-4 bg-green-600 text-white rounded flex items-center justify-center text-[8px] font-bold">TS</span>
+                                    Technical Specs
+                                </p>
+                                <div className="space-y-1.5">
+                                    {project.gauge && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-400 uppercase tracking-wide">Gauge</span>
+                                            <span className="text-xs text-gray-700 font-medium">{project.gauge}</span>
+                                        </div>
+                                    )}
+                                    {project.yarn && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-400 uppercase tracking-wide">Yarn</span>
+                                            <span className="text-xs text-gray-700 font-medium">{project.yarn}</span>
+                                        </div>
+                                    )}
+                                    {project.knittingTime && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-400 uppercase tracking-wide">Knitting Time</span>
+                                            <span className="text-xs text-gray-700 font-medium">{project.knittingTime}</span>
+                                        </div>
+                                    )}
+                                    {project.wash && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-400 uppercase tracking-wide">Wash</span>
+                                            <span className="text-xs text-gray-700 font-medium">{project.wash}</span>
+                                        </div>
+                                    )}
+                                    {project.embroideryPrint && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-400 uppercase tracking-wide">Embroidery/Print</span>
+                                            <span className="text-xs text-gray-700 font-medium">{project.embroideryPrint}</span>
+                                        </div>
+                                    )}
+                                    {project.specialTrims && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-400 uppercase tracking-wide">Special Trims</span>
+                                            <span className="text-xs text-gray-700 font-medium">{project.specialTrims}</span>
+                                        </div>
+                                    )}
+                                    {project.bodyPly && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-400 uppercase tracking-wide">Body Ply</span>
+                                            <span className="text-xs text-gray-700 font-medium">{project.bodyPly}</span>
+                                        </div>
+                                    )}
+                                    {project.cuffBottomPly && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-400 uppercase tracking-wide">Cuff/Bottom</span>
+                                            <span className="text-xs text-gray-700 font-medium">{project.cuffBottomPly}</span>
+                                        </div>
+                                    )}
+                                    {project.neckPly && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-400 uppercase tracking-wide">Neck Ply</span>
+                                            <span className="text-xs text-gray-700 font-medium">{project.neckPly}</span>
+                                        </div>
+                                    )}
+                                    {project.sampleComment && (
+                                        <div className="mt-1">
+                                            <span className="text-xs text-gray-400 uppercase tracking-wide">Sample Comment</span>
+                                            <p className="text-xs text-gray-700 mt-0.5">{project.sampleComment}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Machine Information */}
+                        {(project.machineName || project.machineNo || project.machineGauge || project.machineTypeNo) && (
+                            <div className="border-t border-gray-100 pt-3 mt-3">
+                                <p className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                                    <span className="w-4 h-4 bg-gray-800 text-white rounded flex items-center justify-center text-[8px] font-bold">MI</span>
+                                    Machine Info
+                                </p>
+                                <div className="space-y-1.5">
+                                    {project.machineName && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-400 uppercase tracking-wide">Machine</span>
+                                            <span className="text-xs text-gray-700 font-medium">{project.machineName}</span>
+                                        </div>
+                                    )}
+                                    {project.machineNo && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-400 uppercase tracking-wide">Machine No</span>
+                                            <span className="text-xs text-gray-700 font-medium">{project.machineNo}</span>
+                                        </div>
+                                    )}
+                                    {project.machineGauge && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-400 uppercase tracking-wide">M. Gauge</span>
+                                            <span className="text-xs text-gray-700 font-medium">{project.machineGauge}</span>
+                                        </div>
+                                    )}
+                                    {project.machineTypeNo && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-400 uppercase tracking-wide">Type No</span>
+                                            <span className="text-xs text-gray-700 font-medium">{project.machineTypeNo}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* MIDDLE COLUMN - Production Status */}

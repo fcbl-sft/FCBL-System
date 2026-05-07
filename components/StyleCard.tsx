@@ -219,6 +219,20 @@ const StyleCard: React.FC<StyleCardProps> = ({ project, onClick, onEdit, onDelet
                     {project.description || project.title}
                 </div>
 
+                {/* Gauge & Yarn - Key specs preview */}
+                {(project.gauge || project.yarn) && (
+                    <div
+                        className="truncate mt-0.5"
+                        style={{
+                            fontSize: '10px',
+                            fontWeight: 500,
+                            color: '#888888',
+                        }}
+                    >
+                        {[project.gauge, project.yarn].filter(Boolean).join(' · ')}
+                    </div>
+                )}
+
                 {/* PO Numbers - Show all comma-separated */}
                 {allPONumbers && (
                     <div

@@ -35,6 +35,22 @@ export const mapFromDb = (row: any): Project => ({
     poReceiveDate: row.po_receive_date || undefined,
     shipmentDate: row.shipment_date || undefined,
     fob: row.fob || undefined,
+    // Technical Specifications
+    gauge: row.gauge || undefined,
+    yarn: row.yarn || undefined,
+    knittingTime: row.knitting_time || undefined,
+    wash: row.wash || undefined,
+    embroideryPrint: row.embroidery_print || undefined,
+    specialTrims: row.special_trims || undefined,
+    bodyPly: row.body_ply || undefined,
+    cuffBottomPly: row.cuff_bottom_ply || undefined,
+    neckPly: row.neck_ply || undefined,
+    sampleComment: row.sample_comment || undefined,
+    // Machine Information
+    machineName: row.machine_name || undefined,
+    machineNo: row.machine_no || undefined,
+    machineGauge: row.machine_gauge || undefined,
+    machineTypeNo: row.machine_type_no || undefined,
     poNumbers: normalizePONumbers(row.po_numbers),
     createdAt: row.created_at || undefined,
     status: row.status,
@@ -85,6 +101,19 @@ const mapToDb = (proj: Partial<Project>): Record<string, any> => {
         techPackWorkflow: 'tech_pack_workflow',
         mqControlWorkflow: 'mq_control_workflow',
         mainStatus: 'main_status',
+        // Technical Specifications
+        knittingTime: 'knitting_time',
+        embroideryPrint: 'embroidery_print',
+        specialTrims: 'special_trims',
+        bodyPly: 'body_ply',
+        cuffBottomPly: 'cuff_bottom_ply',
+        neckPly: 'neck_ply',
+        sampleComment: 'sample_comment',
+        // Machine Information
+        machineName: 'machine_name',
+        machineNo: 'machine_no',
+        machineGauge: 'machine_gauge',
+        machineTypeNo: 'machine_type_no',
     };
 
     const result: Record<string, any> = {};

@@ -207,6 +207,34 @@ const StyleLayout: React.FC = () => {
                                 FOB: {project.fob}
                             </span>
                         )}
+                        {project.gauge && (
+                            <span
+                                style={{
+                                    padding: '2px 8px',
+                                    fontSize: '10px',
+                                    fontWeight: 600,
+                                    color: '#6B21A8',
+                                    border: '1px solid #E9D5FF',
+                                    backgroundColor: '#FAF5FF'
+                                }}
+                            >
+                                Gauge: {project.gauge}
+                            </span>
+                        )}
+                        {project.yarn && (
+                            <span
+                                style={{
+                                    padding: '2px 8px',
+                                    fontSize: '10px',
+                                    fontWeight: 600,
+                                    color: '#92400E',
+                                    border: '1px solid #FDE68A',
+                                    backgroundColor: '#FFFBEB'
+                                }}
+                            >
+                                Yarn: {project.yarn}
+                            </span>
+                        )}
                         {project.poNumbers?.slice(0, 3).map(po => (
                             <span
                                 key={po.id}

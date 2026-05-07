@@ -666,6 +666,22 @@ export interface Project {
   materialRemarks?: string;
   materialAttachments?: FileAttachment[];
   materialComments?: Comment[];
+  // Technical Specifications (knitwear/garment manufacturing)
+  gauge?: string;            // Knitting gauge (e.g., 7GG, 12GG, 14GG)
+  yarn?: string;             // Yarn type/composition (e.g., 100% Cotton, Acrylic Blend)
+  knittingTime?: string;     // Time required for knitting (e.g., 45 mins, 1.5 hours)
+  wash?: string;             // Wash type (e.g., Enzyme Wash, Garment Wash, Normal Wash)
+  embroideryPrint?: string;  // Embroidery or print details
+  specialTrims?: string;     // Special trim details
+  bodyPly?: string;          // Body ply (e.g., Single, Double)
+  cuffBottomPly?: string;    // Cuff/Bottom ply (e.g., 1x1 Rib, 2x2 Rib)
+  neckPly?: string;          // Neck ply (e.g., V-Neck Rib)
+  sampleComment?: string;    // Sample comment / notes
+  // Machine Information
+  machineName?: string;      // Machine name (e.g., Shima Seiki, Stoll)
+  machineNo?: string;        // Machine number (e.g., M-001, M-045)
+  machineGauge?: string;     // Machine gauge (e.g., 7GG, 12GG)
+  machineTypeNo?: string;    // Machine type number (e.g., SES-183S)
   // Workflow fields for sections stored at project level
   // (TechPack and MQ Control use top-level workflow; all others store workflow inside their nested section object)
   techPackWorkflow?: WorkflowFields;
