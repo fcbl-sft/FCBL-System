@@ -259,8 +259,8 @@ const SummaryContent: React.FC = () => {
 
     return (
         <div className="h-full overflow-auto bg-gray-50">
-            <div className="p-4 sm:p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="p-6">
+                <div className="grid grid-cols-3 gap-6">
                     {/* LEFT COLUMN - Product Info */}
                     <div className="bg-white rounded-lg border border-gray-200 p-5">
                         {/* Product Image */}
@@ -683,7 +683,7 @@ const SummaryContent: React.FC = () => {
                             </h3>
 
                             {/* Status Summary Counters */}
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                            <div className="grid grid-cols-4 gap-2 mb-4">
                                 <div className="text-center py-2 bg-gray-50 rounded">
                                     <div className="text-lg font-bold text-gray-600">{statusCounts['DRAFT'] || 0}</div>
                                     <div className="text-[10px] text-gray-400 uppercase">Draft</div>

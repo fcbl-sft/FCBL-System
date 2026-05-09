@@ -2,7 +2,7 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Project, UserRole, ProjectStatus, PONumber, MainStatus, ProductionStage } from '../types';
-import { Search, ChevronDown, ChevronUp, X, Check, User, Settings, Shield, LogOut, Menu, Plus } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, X, Check, User, Settings, Shield, LogOut } from 'lucide-react';
 import StyleCard from './StyleCard';
 import DeleteStyleModal from './DeleteStyleModal';
 import EditStyleModal from './EditStyleModal';
@@ -39,7 +39,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [statusFilterOpen, setStatusFilterOpen] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Team, Brand and Factory filter state
   const [teamFilterOpen, setTeamFilterOpen] = useState(false);
@@ -169,12 +168,12 @@ const Dashboard: React.FC<DashboardProps> = ({
     setFactoryFilterOpen(false);
   };
 
+  // Close dropdowns when clicking outside
   const closeAllDropdowns = () => {
     setStatusFilterOpen(false);
     setTeamFilterOpen(false);
     setBrandFilterOpen(false);
     setFactoryFilterOpen(false);
-    setMobileMenuOpen(false);
   };
 
   const filteredProjects = projects.filter(project => {
@@ -292,26 +291,16 @@ const Dashboard: React.FC<DashboardProps> = ({
       onClick={closeAllDropdowns}
     >
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 flex justify-between items-center relative">
-        <div className="flex items-center gap-2 md:gap-4">
-          <button 
-            className="md:hidden text-gray-600 p-1"
-            onClick={(e) => { e.stopPropagation(); setMobileMenuOpen(!mobileMenuOpen); }}
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-            <img src="/fcbl-logo.svg" alt="FCBL" className="h-8 md:h-9" />
-          </div>
+      <header className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center relative">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+          <img src="/fcbl-logo.svg" alt="FCBL" style={{ height: '36px' }} />
         </div>
-
-        <nav className="hidden md:flex gap-6 text-sm absolute left-1/2 transform -translate-x-1/2">
+        <nav className="flex gap-6 text-sm absolute left-1/2 transform -translate-x-1/2">
           <span className="text-black font-medium border-b-2 pb-1" style={{ borderBottomColor: '#4CAF50', color: '#388E3C' }}>PRODUCTS</span>
           <span className="text-gray-400">ORDERS</span>
         </nav>
-
         {/* User Menu */}
-        <div className="relative flex items-center gap-3">
+        <div className="relative">
           <button
             onClick={(e) => { e.stopPropagation(); setUserMenuOpen(!userMenuOpen); }}
             className="flex items-center gap-2 text-sm text-gray-700 hover:text-black transition-colors"
@@ -319,8 +308,8 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
               <User className="w-4 h-4 text-gray-600" />
             </div>
-            <span className="font-medium hidden sm:block">{userName || 'User'}</span>
-            <ChevronDown className={`w-4 h-4 hidden sm:block transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+            <span className="font-medium">{userName || 'User'}</span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
           </button>
           {userMenuOpen && (
             <div
@@ -371,24 +360,16 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </header>
 
-      {/* Mobile Nav Menu (Hamburger Dropdown) */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-gray-200 px-4 py-2 flex flex-col gap-3">
-          <div className="font-medium text-[#388E3C] py-2 border-b border-gray-100">PRODUCTS</div>
-          <div className="text-gray-500 py-2">ORDERS</div>
-        </div>
-      )}
-
       {/* Filter Bar */}
-      <div className="bg-white border-b border-gray-200 px-4 md:px-6 py-2.5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full sm:w-auto">
+      <div className="bg-white border-b border-gray-200 px-6 py-2.5 flex justify-between items-center">
+        <div className="flex items-center gap-4">
           {/* Search */}
-          <div className="flex items-center gap-2 bg-gray-50 px-2 py-1.5 md:bg-transparent md:p-0 rounded-md flex-1 sm:flex-none">
+          <div className="flex items-center gap-2">
             <Search className="w-4 h-4 text-gray-400" />
             <input
               type="text"
               placeholder="Search..."
-              className="text-sm outline-none w-full sm:w-32 md:w-40 bg-transparent"
+              className="text-sm outline-none w-40"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onClick={(e) => e.stopPropagation()}
@@ -639,7 +620,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {/* + New Style Button */}
         <button
           onClick={onCreateTechPack}
-          className="flex items-center justify-center gap-1.5 px-4 md:px-5 py-2.5 text-xs font-bold uppercase tracking-wide min-h-[44px] w-full sm:w-auto"
+          className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold uppercase tracking-wide"
           style={{
             background: 'linear-gradient(90deg, #4CAF50, #388E3C)',
             color: '#FFFFFF',
@@ -648,9 +629,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(90deg, #388E3C, #2E7D32)'}
           onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(90deg, #4CAF50, #388E3C)'}
         >
-          <Plus className="w-4 h-4 sm:hidden" />
-          <span className="hidden sm:inline">+ New Style</span>
-          <span className="sm:hidden">New</span>
+          + New Style
         </button>
       </div>
 
@@ -663,7 +642,12 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         {filteredProjects.length > 0 ? (
           <div
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-[1px] bg-gray-200"
+            className="grid"
+            style={{
+              gridTemplateColumns: 'repeat(6, 1fr)',
+              gap: '1px',
+              backgroundColor: '#E0E0E0'
+            }}
           >
             {filteredProjects.map((project) => (
               <StyleCard

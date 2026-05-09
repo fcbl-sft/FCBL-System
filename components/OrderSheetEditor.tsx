@@ -556,9 +556,9 @@ const OrderSheetEditor: React.FC<OrderSheetEditorProps> = ({ project, onUpdate, 
 
   return (
     <div className="flex flex-col h-full bg-white print:bg-white overflow-hidden" style={{ color: '#000000' }}>
-      <header className="bg-white px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0 z-30 no-print" style={{ borderBottom: '1px solid #E0E0E0' }}>
-        <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
-          <button onClick={onBack} className="p-1 sm:p-2 transition-all shrink-0" style={{ color: '#000000' }}>
+      <header className="bg-white px-6 py-4 flex justify-between items-center shrink-0 z-30 no-print" style={{ borderBottom: '1px solid #E0E0E0' }}>
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="p-2 transition-all" style={{ color: '#000000' }}>
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-3">
@@ -580,12 +580,12 @@ const OrderSheetEditor: React.FC<OrderSheetEditorProps> = ({ project, onUpdate, 
               <RotateCcw className="w-3.5 h-3.5" /> Reset
             </button>
           )}
-          <button onClick={() => setViewMode(viewMode === 'EDIT' ? 'PREVIEW' : 'EDIT')} className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-xs font-bold uppercase transition-all" style={{ border: '1px solid #000000', color: '#000000', backgroundColor: 'white' }}>
-            {viewMode === 'EDIT' ? <Eye className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />} <span className="hidden sm:inline">{viewMode === 'EDIT' ? 'Preview' : 'Edit'}</span>
+          <button onClick={() => setViewMode(viewMode === 'EDIT' ? 'PREVIEW' : 'EDIT')} className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase transition-all" style={{ border: '1px solid #000000', color: '#000000', backgroundColor: 'white' }}>
+            {viewMode === 'EDIT' ? <Eye className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />} {viewMode === 'EDIT' ? 'Preview' : 'Edit'}
           </button>
           {!isLocked && (
-            <button onClick={handleSave} className="btn-primary flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-xs font-bold uppercase transition-all">
-              <Save className="w-4 h-4" /> <span className="hidden sm:inline">SAVE</span>
+            <button onClick={handleSave} className="btn-primary flex items-center gap-2">
+              <Save className="w-4 h-4" /> SAVE
             </button>
           )}
         </div>
@@ -597,7 +597,7 @@ const OrderSheetEditor: React.FC<OrderSheetEditorProps> = ({ project, onUpdate, 
         </div>
       )}
 
-      <main className="flex-grow overflow-y-auto p-4 sm:p-8 bg-slate-100/30 print:p-0 print:bg-white relative">
+      <main className="flex-grow overflow-y-auto p-8 bg-slate-100/30 print:p-0 print:bg-white relative">
         {viewMode === 'EDIT' ? (
           <div className="w-full space-y-10 pb-32 no-print">
             {/* COMPANY & HEADER INFO */}
@@ -784,16 +784,16 @@ const OrderSheetEditor: React.FC<OrderSheetEditorProps> = ({ project, onUpdate, 
 
             {/* COLOR & SIZE BREAKDOWN - MULTIPLE TABLES SUPPORT */}
             <div className="space-y-12">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
-                <h2 className="text-sm sm:text-lg font-bold text-black tracking-tight uppercase flex items-center gap-2 sm:gap-3">
-                  <Layers className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+              <div className="flex justify-between items-center no-print">
+                <h2 className="text-lg font-bold text-black tracking-tight uppercase flex items-center gap-3">
+                  <Layers className="w-6 h-6 text-black" />
                   Purchase Order Breakdown Tables
                 </h2>
                 <button
                   onClick={addBreakdownTable}
-                  className="btn-primary w-full sm:w-auto flex justify-center items-center"
+                  className="btn-primary"
                 >
-                  <Plus className="w-4 h-4 mr-2" /> Add New Table
+                  <Plus className="w-4 h-4" /> Add New Table
                 </button>
               </div>
 
@@ -947,17 +947,16 @@ const OrderSheetEditor: React.FC<OrderSheetEditorProps> = ({ project, onUpdate, 
                 </div>
               ))}
 
-              <div className="flex flex-col sm:flex-row justify-end no-print mt-8">
-                <div className="text-white p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-12 border-4 border-white fcbl-header-bar w-full sm:w-auto">
-                  <div className="w-full sm:w-auto">
-                    <span className="text-[9px] sm:text-[10px] font-black uppercase opacity-60 tracking-[0.2em] block mb-1">Grand Total Order Qty</span>
-                    <span className="text-2xl sm:text-4xl font-black">{totals.qtyTotal.toLocaleString()} PCS</span>
+              <div className="flex justify-end no-print">
+                <div className="text-white p-6 flex items-center gap-12 border-4 border-white fcbl-header-bar">
+                  <div>
+                    <span className="text-[10px] font-black uppercase opacity-60 tracking-[0.2em] block mb-1">Grand Total Order Qty</span>
+                    <span className="text-4xl font-black">{totals.qtyTotal.toLocaleString()} PCS</span>
                   </div>
-                  <div className="hidden sm:block w-px h-12 bg-white/20"></div>
-                  <div className="sm:hidden h-px w-full bg-white/20"></div>
-                  <div className="w-full sm:w-auto">
-                    <span className="text-[9px] sm:text-[10px] font-black uppercase opacity-60 tracking-[0.2em] block mb-1">Consolidated PO Value</span>
-                    <span className="text-2xl sm:text-4xl font-black">${totals.amountTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {formData.currency}</span>
+                  <div className="w-px h-12 bg-white/20"></div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase opacity-60 tracking-[0.2em] block mb-1">Consolidated PO Value</span>
+                    <span className="text-4xl font-black">${totals.amountTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {formData.currency}</span>
                   </div>
                 </div>
               </div>

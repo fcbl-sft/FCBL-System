@@ -151,17 +151,17 @@ const StyleLayout: React.FC = () => {
     return (
         <div className="flex flex-col h-screen bg-white">
             {/* PERSISTENT HEADER */}
-            <header className="bg-white px-4 sm:px-6 py-4 flex flex-wrap items-start sm:items-center gap-2 sm:gap-4 shrink-0 relative" style={{ borderBottom: '1px solid #E0E0E0' }}>
+            <header className="bg-white px-6 py-4 flex items-center gap-4 shrink-0" style={{ borderBottom: '1px solid #E0E0E0' }}>
                 <button
                     onClick={handleBack}
-                    className="p-1 sm:p-2 transition-colors"
+                    className="p-2 transition-colors"
                     style={{ color: '#000000' }}
                     title="Back to Dashboard"
                 >
                     <ArrowLeft className="w-5 h-5" />
                 </button>
-                <div className="flex-grow min-w-[200px]">
-                    <h1 className="text-sm sm:text-base pr-16 sm:pr-0" style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#000000' }}>
+                <div className="flex-grow">
+                    <h1 style={{ fontWeight: 700, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#000000' }}>
                         {project.title}
                     </h1>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -255,39 +255,24 @@ const StyleLayout: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Edit/Delete Buttons and Status */}
-                <div className="flex items-center gap-2 absolute sm:relative right-4 sm:right-auto top-4 sm:top-auto">
-                    <span
-                        className="hidden sm:inline-block mr-2"
-                        style={{
-                            fontSize: '10px',
-                            fontWeight: 700,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            color: getStatusStyle(project.status)
-                        }}
-                    >
-                        {project.status}
-                    </span>
+                {/* Edit/Delete Buttons */}
+                <div className="flex items-center gap-2">
                     <button
                         onClick={() => setShowEditModal(true)}
-                        className="p-1.5 sm:p-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded transition-colors"
+                        className="p-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded transition-colors"
                         title="Edit Style"
                     >
                         <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                         onClick={() => setShowDeleteModal(true)}
-                        className="p-1.5 sm:p-2 text-gray-600 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                        className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                         title="Delete Style"
                     >
                         <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
-            </header>
 
-            {/* Status (Mobile only) */}
-            <div className="sm:hidden px-4 py-2 bg-gray-50 border-b border-gray-200">
                 <span
                     style={{
                         fontSize: '10px',
@@ -297,12 +282,12 @@ const StyleLayout: React.FC = () => {
                         color: getStatusStyle(project.status)
                     }}
                 >
-                    Status: {project.status}
+                    {project.status}
                 </span>
-            </div>
+            </header>
 
             {/* PERSISTENT TAB NAVIGATION */}
-            <nav className="bg-white px-0 sm:px-6 flex justify-start md:justify-center gap-0 shrink-0 overflow-x-auto no-scrollbar" style={{ borderBottom: '1px solid #E0E0E0', WebkitOverflowScrolling: 'touch' }}>
+            <nav className="bg-white px-6 flex justify-center gap-0 shrink-0" style={{ borderBottom: '1px solid #E0E0E0', overflow: 'visible' }}>
                 {visibleTabs.map(tab => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -340,18 +325,16 @@ const StyleLayout: React.FC = () => {
                                 {/* Commercial Dropdown Menu */}
                                 {showCommercialDropdown && (
                                     <div
-                                        className="fixed sm:absolute"
                                         style={{
-                                            top: window.innerWidth < 640 ? 'auto' : '100%',
-                                            bottom: window.innerWidth < 640 ? 0 : 'auto',
-                                            left: window.innerWidth < 640 ? 0 : 'auto',
-                                            width: window.innerWidth < 640 ? '100%' : 'auto',
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: '0',
                                             marginTop: '0',
                                             backgroundColor: '#FFFFFF',
                                             border: '1px solid #E0E0E0',
                                             borderTop: 'none',
-                                            borderRadius: window.innerWidth < 640 ? '12px 12px 0 0' : '0 0 4px 4px',
-                                            boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.15)',
+                                            borderRadius: '0 0 4px 4px',
+                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
                                             zIndex: 9999,
                                             minWidth: '220px'
                                         }}

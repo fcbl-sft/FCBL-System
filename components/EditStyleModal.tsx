@@ -227,7 +227,7 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
                 {/* Content */}
                 <div className="px-6 py-5 space-y-5">
                     {/* Style Name + Article Number (same row) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Style Name
@@ -328,7 +328,7 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
                     </div>
 
                     {/* PO Receive Date + Shipment Date (same row) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 PO Receive Date
@@ -373,7 +373,7 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
                             <span className="w-5 h-5 bg-green-600 text-white rounded flex items-center justify-center text-[9px] font-bold">TS</span>
                             Technical Specifications
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">Gauge</label>
                                 <input type="text" value={gauge} onChange={e => setGauge(e.target.value)}
@@ -437,7 +437,7 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
                                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
                                     placeholder="e.g., V-Neck Rib" />
                             </div>
-                            <div className="col-span-1 md:col-span-2">
+                            <div className="col-span-2">
                                 <label className="block text-xs font-medium text-gray-700 mb-1">Sample Comment</label>
                                 <textarea value={sampleComment} onChange={e => setSampleComment(e.target.value)} rows={2}
                                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent resize-none"
@@ -452,7 +452,7 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
                             <span className="w-5 h-5 bg-gray-800 text-white rounded flex items-center justify-center text-[9px] font-bold">MI</span>
                             Machine Information
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">Machine Name</label>
                                 <input type="text" value={machineName} onChange={e => setMachineName(e.target.value)}
@@ -517,7 +517,7 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Product Image
                         </label>
-                        <div className="flex flex-col sm:flex-row items-start gap-4">
+                        <div className="flex items-start gap-4">
                             {productImage ? (
                                 <div className="relative w-24 h-24 border border-gray-200 rounded overflow-hidden bg-gray-50">
                                     <img src={productImage} alt="Product" className="w-full h-full object-contain" />
@@ -535,7 +535,7 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
                             )}
                             <button
                                 onClick={() => imageInputRef.current?.click()}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 min-h-[44px] w-full sm:w-auto mt-2 sm:mt-0"
+                                className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-2"
                             >
                                 <Upload className="w-4 h-4" />
                                 Upload Image
@@ -622,8 +622,8 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
                         </div>
                         <div className="space-y-2">
                             {poNumbers.map(po => (
-                                <div key={po.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
+                                <div key={po.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-200">
+                                    <div className="flex-1 grid grid-cols-3 gap-2">
                                         <input
                                             type="text"
                                             value={po.number}
@@ -658,7 +658,7 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
                             {/* Add PO Form */}
                             {showAddPO && (
                                 <div className="p-3 bg-blue-50 rounded border border-blue-200">
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+                                    <div className="grid grid-cols-3 gap-2 mb-2">
                                         <input
                                             type="text"
                                             value={newPONumber}
@@ -684,13 +684,13 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
                                     <div className="flex justify-end gap-2">
                                         <button
                                             onClick={() => setShowAddPO(false)}
-                                            className="w-full sm:w-auto px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 min-h-[44px]"
+                                            className="px-2 py-1 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             onClick={handleAddPO}
-                                            className="w-full sm:w-auto px-4 py-2 btn-primary text-xs rounded min-h-[44px]"
+                                            className="px-2 py-1 btn-primary text-xs rounded"
                                             disabled={!newPONumber.trim()}
                                         >
                                             Add
@@ -703,16 +703,16 @@ const EditStyleModal: React.FC<EditStyleModalProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 sticky bottom-0">
+                <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 sticky bottom-0">
                     <button
                         onClick={onCancel}
-                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors min-h-[44px]"
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleSave}
-                        className="w-full sm:w-auto px-4 py-2 btn-primary text-sm rounded transition-colors min-h-[44px]"
+                        className="px-4 py-2 btn-primary text-sm rounded transition-colors"
                     >
                         Save
                     </button>
