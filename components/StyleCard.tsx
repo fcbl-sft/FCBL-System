@@ -178,84 +178,47 @@ const StyleCard: React.FC<StyleCardProps> = ({ project, onClick, onEdit, onDelet
             </div>
 
             {/* Text Area */}
-            <div className="px-3 py-2" style={{ backgroundColor: '#FFFFFF' }}>
-                {/* Style Number - Bold uppercase 12px */}
-                <div
-                    className="text-black truncate"
-                    style={{
-                        fontSize: '12px',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.3px'
-                    }}
-                >
+            <div className="p-3 sm:p-4 bg-white flex flex-col gap-1">
+                {/* Style Number */}
+                <div className="text-black font-bold uppercase tracking-wide truncate text-sm sm:text-base">
                     {displayStyleNumber}
                 </div>
 
                 {/* Article Number - If available */}
                 {displayArticleNumber && (
-                    <div
-                        className="truncate mt-0.5"
-                        style={{
-                            fontSize: '10px',
-                            fontWeight: 500,
-                            color: '#555555',
-                        }}
-                    >
+                    <div className="truncate text-xs text-gray-600 font-medium">
                         Art: {displayArticleNumber}
                     </div>
                 )}
 
-                {/* Description - Gray uppercase 11px truncated */}
-                <div
-                    className="truncate mt-0.5"
-                    style={{
-                        fontSize: '11px',
-                        fontWeight: 400,
-                        color: '#444444',
-                        textTransform: 'uppercase'
-                    }}
-                >
+                {/* Description */}
+                <div className="truncate text-xs text-gray-500 uppercase">
                     {project.description || project.title}
                 </div>
 
-                {/* Gauge & Yarn - Key specs preview */}
+                {/* Gauge & Yarn */}
                 {(project.gauge || project.yarn) && (
-                    <div
-                        className="truncate mt-0.5"
-                        style={{
-                            fontSize: '10px',
-                            fontWeight: 500,
-                            color: '#888888',
-                        }}
-                    >
+                    <div className="truncate text-xs text-gray-400 font-medium">
                         {[project.gauge, project.yarn].filter(Boolean).join(' · ')}
                     </div>
                 )}
 
-                {/* PO Numbers - Show all comma-separated */}
+                {/* PO Numbers */}
                 {allPONumbers && (
-                    <div
-                        className="truncate mt-1"
-                        style={{
-                            fontSize: '10px',
-                            fontWeight: 400,
-                            color: '#666666'
-                        }}
-                    >
+                    <div className="truncate text-xs text-gray-500">
                         PO: {allPONumbers}
                     </div>
                 )}
 
-                {/* Color Swatches - Square 16x16 with border */}
+                {/* Color Swatches */}
                 {productColors.length > 0 && (
                     <div className="flex gap-1 mt-2">
                         {productColors.slice(0, 5).map((color) => (
                             <div
                                 key={color.id}
                                 style={{
-                                    width: '16px',
-                                    height: '16px',
+                                    width: '18px',
+                                    height: '18px',
                                     backgroundColor: color.hex,
                                     border: '1px solid #D0D0D0'
                                 }}
@@ -265,36 +228,24 @@ const StyleCard: React.FC<StyleCardProps> = ({ project, onClick, onEdit, onDelet
                     </div>
                 )}
 
-                {/* Status - Main Stage */}
+                {/* Status */}
                 <div
-                    className="mt-2"
-                    style={{
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        color: getStatusColor(),
-                        textTransform: 'uppercase'
-                    }}
+                    className="mt-2 text-xs font-bold uppercase tracking-wide"
+                    style={{ color: getStatusColor() }}
                 >
                     {mainStatus}
                 </div>
 
                 {/* Production Sub-stage */}
                 {mainStatus === 'PRODUCTION' && productionStage && (
-                    <div
-                        className="mt-0.5"
-                        style={{
-                            fontSize: '9px',
-                            fontWeight: 500,
-                            color: '#6B7280'
-                        }}
-                    >
+                    <div className="text-[10px] text-gray-500 font-medium">
                         └─ {productionStage}
                     </div>
                 )}
 
                 {/* Handover Date */}
                 {deliveryDate && (
-                    <div className="mt-1 flex gap-2" style={{ fontSize: '10px' }}>
+                    <div className="mt-1 flex gap-2 text-xs">
                         <span style={{ color: '#888888', fontWeight: 400 }}>HANDOVER</span>
                         <span style={{ color: '#000000', fontWeight: 400 }}>{formatDate(deliveryDate)}</span>
                     </div>

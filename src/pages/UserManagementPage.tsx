@@ -140,11 +140,11 @@ const UserManagementPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <header className="bg-white px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #E0E0E0' }}>
-                <div className="flex items-center gap-4">
+            <header className="bg-white px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ borderBottom: '1px solid #E0E0E0' }}>
+                <div className="flex items-center gap-4 w-full sm:w-auto">
                     <button
                         onClick={() => navigate(ROUTES.DASHBOARD)}
-                        className="p-2 hover:bg-gray-100 transition-colors"
+                        className="p-2 hover:bg-gray-100 transition-colors shrink-0"
                         style={{ color: '#000000' }}
                     >
                         <ArrowLeft className="w-5 h-5" />
@@ -158,7 +158,7 @@ const UserManagementPage: React.FC = () => {
                 </div>
                 <button
                     onClick={() => navigate(ROUTES.USER_NEW)}
-                    className="flex items-center gap-2 px-4 py-2 btn-primary transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-2 btn-primary transition-colors w-full sm:w-auto min-h-[44px]"
                     style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}
                 >
                     <Plus className="w-4 h-4" />
@@ -166,7 +166,7 @@ const UserManagementPage: React.FC = () => {
                 </button>
             </header>
 
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
                 {/* Message */}
                 {message && (
                     <div
@@ -221,8 +221,8 @@ const UserManagementPage: React.FC = () => {
                 </div>
 
                 {/* Users Table */}
-                <div className="bg-white shadow-lg overflow-hidden" style={{ border: '1px solid #E0E0E0' }}>
-                    <table className="w-full">
+                <div className="bg-white shadow-lg overflow-x-auto" style={{ border: '1px solid #E0E0E0' }}>
+                    <table className="w-full min-w-[600px]">
                         <thead>
                             <tr style={{ backgroundColor: '#FAFAFA', borderBottom: '1px solid #E0E0E0' }}>
                                 <th className="px-4 py-3 text-left" style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#666' }}>

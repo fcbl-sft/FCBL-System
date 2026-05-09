@@ -215,7 +215,7 @@ const NewStylePage: React.FC = () => {
             <div className="max-w-2xl mx-auto px-6 py-8">
                 <div className="space-y-6">
                     {/* Style Name + Article Number (same row) */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Style Name
@@ -316,7 +316,7 @@ const NewStylePage: React.FC = () => {
                     </div>
 
                     {/* PO Receive Date + Shipment Date (same row) */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 PO Receive Date
@@ -361,7 +361,7 @@ const NewStylePage: React.FC = () => {
                             <span className="w-6 h-6 bg-green-600 text-white rounded flex items-center justify-center text-[10px] font-bold">TS</span>
                             Technical Specifications
                         </h3>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Gauge</label>
                                 <input
@@ -460,7 +460,7 @@ const NewStylePage: React.FC = () => {
                                     placeholder="e.g., V-Neck Rib, Crew Neck"
                                 />
                             </div>
-                            <div className="col-span-2">
+                            <div className="col-span-1 md:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Sample Comment</label>
                                 <textarea
                                     value={sampleComment}
@@ -479,7 +479,7 @@ const NewStylePage: React.FC = () => {
                             <span className="w-6 h-6 bg-gray-800 text-white rounded flex items-center justify-center text-[10px] font-bold">MI</span>
                             Machine Information
                         </h3>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Machine Name</label>
                                 <input
@@ -539,8 +539,8 @@ const NewStylePage: React.FC = () => {
                         </div>
                         <div className="space-y-2">
                             {poNumbers.map(po => (
-                                <div key={po.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                    <div className="flex-1 grid grid-cols-3 gap-2">
+                                <div key={po.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-2 bg-gray-50 rounded border border-gray-200">
+                                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
                                         <input
                                             type="text"
                                             value={po.number}
@@ -575,7 +575,7 @@ const NewStylePage: React.FC = () => {
                             {/* Add PO Form */}
                             {showAddPO && (
                                 <div className="p-3 bg-blue-50 rounded border border-blue-200">
-                                    <div className="grid grid-cols-3 gap-2 mb-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
                                         <input
                                             type="text"
                                             value={newPONumber}
@@ -601,13 +601,13 @@ const NewStylePage: React.FC = () => {
                                     <div className="flex justify-end gap-2">
                                         <button
                                             onClick={() => setShowAddPO(false)}
-                                            className="px-2 py-1 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50"
+                                            className="w-full sm:w-auto px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 min-h-[44px]"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             onClick={handleAddPO}
-                                            className="px-2 py-1 btn-primary text-xs rounded"
+                                            className="w-full sm:w-auto px-4 py-2 btn-primary text-xs rounded min-h-[44px]"
                                             disabled={!newPONumber.trim()}
                                         >
                                             Add
@@ -620,10 +620,10 @@ const NewStylePage: React.FC = () => {
 
                     {/* Product Image */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                             Product Image
                         </label>
-                        <div className="flex items-start gap-4">
+                        <div className="flex flex-col sm:flex-row items-start gap-4">
                             {productImage ? (
                                 <div className="relative w-24 h-24 border border-gray-200 rounded overflow-hidden bg-gray-50">
                                     <img src={productImage} alt="Product" className="w-full h-full object-contain" />
@@ -641,7 +641,7 @@ const NewStylePage: React.FC = () => {
                             )}
                             <button
                                 onClick={() => imageInputRef.current?.click()}
-                                className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-2"
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 min-h-[44px] w-full sm:w-auto mt-2 sm:mt-0"
                             >
                                 <Upload className="w-4 h-4" />
                                 Upload Image
@@ -733,17 +733,17 @@ const NewStylePage: React.FC = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex justify-end gap-3 mt-10 pt-6 border-t border-gray-200">
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-10 pt-6 border-t border-gray-200">
                     <button
                         onClick={handleBack}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors min-h-[44px]"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleCreate}
                         disabled={isSaving}
-                        className="px-4 py-2 btn-primary text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full sm:w-auto px-4 py-2 btn-primary text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
                     >
                         {isSaving ? 'Creating...' : 'Create Style'}
                     </button>

@@ -80,8 +80,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
           </div>
 
           {/* Login Card */}
-          <div className="bg-white shadow-lg" style={{ border: '1px solid #E0E0E0' }}>
-            <div className="p-8">
+          <div className="bg-white shadow-lg rounded-lg sm:rounded-none" style={{ border: '1px solid #E0E0E0' }}>
+            <div className="p-6 sm:p-8">
               <h2
                 className="text-center mb-6"
                 style={{ fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#333' }}
@@ -160,8 +160,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                 </div>
 
                 {/* Remember Me & Forgot Password */}
-                <div className="flex items-center justify-between mb-6">
-                  <label className="flex items-center gap-2 cursor-pointer">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer py-1">
                     <input
                       type="checkbox"
                       checked={rememberMe}
@@ -175,7 +175,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                     <button
                       type="button"
                       onClick={onForgotPassword}
-                      className="text-black hover:underline"
+                      className="text-black hover:underline py-2"
                       style={{ fontSize: '12px', fontWeight: 500 }}
                       disabled={loading}
                     >
