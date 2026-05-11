@@ -14,10 +14,10 @@ const SettingsPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <header className="bg-white px-6 py-4 flex items-center gap-4" style={{ borderBottom: '1px solid #E0E0E0' }}>
+            <header className="bg-white px-4 md:px-6 py-3 md:py-4 flex items-center gap-3" style={{ borderBottom: '1px solid #E0E0E0' }}>
                 <button
                     onClick={() => navigate(ROUTES.DASHBOARD)}
-                    className="p-2 hover:bg-gray-100 transition-colors rounded"
+                    className="p-2 hover:bg-gray-100 transition-colors rounded flex items-center justify-center min-w-[44px] min-h-[44px]"
                 >
                     <ArrowLeft className="w-5 h-5" />
                 </button>
@@ -29,7 +29,7 @@ const SettingsPage: React.FC = () => {
                 </div>
             </header>
 
-            <div className="p-6 max-w-2xl mx-auto">
+            <div className="p-4 md:p-6 max-w-2xl mx-auto">
                 {/* Settings Sections */}
                 <div className="space-y-4">
                     {/* Notifications */}
@@ -110,9 +110,9 @@ const SettingsPage: React.FC = () => {
                 </div>
 
                 {/* Save Button */}
-                <div className="mt-6 flex justify-end">
+                <div className="mt-6 flex flex-col sm:flex-row sm:justify-end">
                     <button
-                        className="px-6 py-2 btn-primary text-sm rounded"
+                        className="w-full sm:w-auto px-6 py-3 sm:py-2 btn-primary text-sm rounded"
                     >
                         Save Settings
                     </button>

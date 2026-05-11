@@ -122,18 +122,18 @@ const ActivityLogsPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <header className="bg-white px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #E0E0E0' }}>
-                <div className="flex items-center gap-4">
+            <header className="bg-white px-4 md:px-6 py-3 md:py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #E0E0E0' }}>
+                <div className="flex items-center gap-3">
                     <button
                         onClick={() => navigate('/admin')}
-                        className="p-2 hover:bg-gray-100 transition-colors rounded"
+                        className="p-2 hover:bg-gray-100 transition-colors rounded flex items-center justify-center min-w-[44px] min-h-[44px]"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div className="flex items-center gap-2">
                         <Activity className="w-5 h-5" />
-                        <h1 style={{ fontWeight: 700, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Admin Panel &gt; Activity Logs
+                        <h1 style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            <span className="hidden sm:inline">Admin Panel &gt; </span>Activity Logs
                         </h1>
                     </div>
                 </div>
@@ -146,7 +146,7 @@ const ActivityLogsPage: React.FC = () => {
                 </button>
             </header>
 
-            <div className="p-6">
+            <div className="p-4 md:p-6">
                 {/* Error */}
                 {error && (
                     <div
@@ -189,9 +189,9 @@ const ActivityLogsPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Logs Table */}
+                {/* Desktop Logs Table */}
                 <div
-                    className="bg-white overflow-hidden"
+                    className="hidden md:block bg-white overflow-hidden"
                     style={{ border: '1px solid #E0E0E0' }}
                 >
                     <table className="w-full">
@@ -233,6 +233,27 @@ const ActivityLogsPage: React.FC = () => {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-3">
+                    {filteredLogs.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500 text-sm">No activity logs found</div>
+                    ) : (
+                        filteredLogs.map(log => (
+                            <div key={log.id} className="bg-white rounded-lg p-4" style={{ border: '1px solid #E0E0E0' }}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                        {getStatusIcon(log.status)}
+                                        {getStatusBadge(log.status)}
+                                    </div>
+                                    <span className="text-xs text-gray-400 font-mono">{log.ip_address || '-'}</span>
+                                </div>
+                                <div className="text-sm font-medium text-gray-900 mb-1">{log.email}</div>
+                                <div className="text-xs text-gray-500">{formatDate(log.created_at)}</div>
+                            </div>
+                        ))
+                    )}
                 </div>
 
                 {/* Stats */}

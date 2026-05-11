@@ -2,7 +2,7 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Project, UserRole, ProjectStatus, PONumber, MainStatus, ProductionStage } from '../types';
-import { Search, ChevronDown, ChevronUp, X, Check, User, Settings, Shield, LogOut } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, X, Check, User, Settings, Shield, LogOut, Menu, Filter, Plus } from 'lucide-react';
 import StyleCard from './StyleCard';
 import DeleteStyleModal from './DeleteStyleModal';
 import EditStyleModal from './EditStyleModal';
@@ -39,6 +39,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [statusFilterOpen, setStatusFilterOpen] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Team, Brand and Factory filter state
   const [teamFilterOpen, setTeamFilterOpen] = useState(false);
@@ -288,28 +290,104 @@ const Dashboard: React.FC<DashboardProps> = ({
     <div
       className="min-h-screen bg-white"
       style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif' }}
-      onClick={closeAllDropdowns}
+      onClick={() => { closeAllDropdowns(); setMobileMenuOpen(false); }}
     >
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center relative">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-          <img src="/fcbl-logo.svg" alt="FCBL" style={{ height: '36px' }} />
+      {/* Mobile Drawer Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black bg-opacity-40"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile Drawer */}
+      {mobileMenuOpen && (
+        <div
+          className="mobile-drawer"
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="mobile-drawer-header">
+            <img src="/fcbl-logo.svg" alt="FCBL" style={{ height: '30px' }} />
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="p-2 text-gray-500 hover:text-black"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="mobile-drawer-nav">
+            <button className="mobile-drawer-item active">
+              PRODUCTS
+            </button>
+            <button className="mobile-drawer-item">
+              ORDERS
+            </button>
+            <div className="mobile-drawer-divider" />
+            <button
+              className="mobile-drawer-item"
+              onClick={() => { setMobileMenuOpen(false); navigate('/profile'); }}
+            >
+              <User className="w-4 h-4" /> My Profile
+            </button>
+            <button
+              className="mobile-drawer-item"
+              onClick={() => { setMobileMenuOpen(false); navigate('/settings'); }}
+            >
+              <Settings className="w-4 h-4" /> Settings
+            </button>
+            {(role === 'super_admin' || role === 'admin') && (
+              <button
+                className="mobile-drawer-item"
+                onClick={() => { setMobileMenuOpen(false); navigate('/admin'); }}
+              >
+                <Shield className="w-4 h-4" /> Admin Panel
+              </button>
+            )}
+            <div className="mobile-drawer-divider" />
+            <button
+              className="mobile-drawer-item"
+              style={{ color: '#DC2626' }}
+              onClick={() => { setMobileMenuOpen(false); onLogout(); }}
+            >
+              <LogOut className="w-4 h-4" /> Logout
+            </button>
+          </div>
         </div>
-        <nav className="flex gap-6 text-sm absolute left-1/2 transform -translate-x-1/2">
+      )}
+
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 flex justify-between items-center relative">
+        {/* Mobile: Hamburger + Logo */}
+        <div className="flex items-center gap-3">
+          <button
+            className="md:hidden flex items-center justify-center w-11 h-11 text-gray-600 hover:text-black"
+            onClick={e => { e.stopPropagation(); setMobileMenuOpen(!mobileMenuOpen); }}
+            aria-label="Open menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+            <img src="/fcbl-logo.svg" alt="FCBL" style={{ height: '32px' }} />
+          </div>
+        </div>
+
+        {/* Desktop: Center Nav */}
+        <nav className="hidden md:flex gap-6 text-sm absolute left-1/2 transform -translate-x-1/2">
           <span className="text-black font-medium border-b-2 pb-1" style={{ borderBottomColor: '#4CAF50', color: '#388E3C' }}>PRODUCTS</span>
           <span className="text-gray-400">ORDERS</span>
         </nav>
+
         {/* User Menu */}
         <div className="relative">
           <button
             onClick={(e) => { e.stopPropagation(); setUserMenuOpen(!userMenuOpen); }}
             className="flex items-center gap-2 text-sm text-gray-700 hover:text-black transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center">
               <User className="w-4 h-4 text-gray-600" />
             </div>
-            <span className="font-medium">{userName || 'User'}</span>
-            <ChevronDown className={`w-4 h-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+            <span className="hidden sm:inline font-medium">{userName || 'User'}</span>
+            <ChevronDown className={`hidden sm:block w-4 h-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
           </button>
           {userMenuOpen && (
             <div
@@ -361,10 +439,10 @@ const Dashboard: React.FC<DashboardProps> = ({
       </header>
 
       {/* Filter Bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-2.5 flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          {/* Search */}
-          <div className="flex items-center gap-2">
+      <div className="bg-white border-b border-gray-200 px-4 md:px-6 py-2 md:py-2.5 flex justify-between items-center" style={{ position: 'relative', zIndex: 100 }}>
+        <div className="flex items-center gap-3">
+          {/* Search — hidden on mobile, visible on md+ */}
+          <div className="hidden md:flex items-center gap-2">
             <Search className="w-4 h-4 text-gray-400" />
             <input
               type="text"
@@ -375,6 +453,11 @@ const Dashboard: React.FC<DashboardProps> = ({
               onClick={(e) => e.stopPropagation()}
             />
           </div>
+
+          {/* Mobile search icon */}
+          <button className="md:hidden flex items-center justify-center w-10 h-10 text-gray-500">
+            <Search className="w-4 h-4" />
+          </button>
 
           {/* Status Filter */}
           <div className="relative" onClick={(e) => e.stopPropagation()}>
@@ -453,14 +536,15 @@ const Dashboard: React.FC<DashboardProps> = ({
             )}
           </div>
 
-          {/* Static filters */}
+          {/* Static filters — hidden on mobile */}
           {['MILESTONES', 'SAMPLE TASKS'].map(filter => (
-            <button key={filter} className="flex items-center gap-1 text-xs font-bold uppercase text-gray-600">
+            <button key={filter} className="hidden lg:flex items-center gap-1 text-xs font-bold uppercase text-gray-600">
               {filter} <ChevronDown className="w-3 h-3" />
             </button>
           ))}
 
-          {/* TEAM Filter */}
+          {/* TEAM, BRAND, FACTORY Filters — hidden on mobile */}
+          <div className="hidden md:flex items-center gap-3">
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => { setTeamFilterOpen(!teamFilterOpen); setStatusFilterOpen(false); setBrandFilterOpen(false); setFactoryFilterOpen(false); }}
@@ -615,21 +699,26 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
             )}
           </div>
+          </div>
         </div>
 
         {/* + New Style Button */}
         <button
           onClick={onCreateTechPack}
-          className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold uppercase tracking-wide"
+          className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide shrink-0"
           style={{
             background: 'linear-gradient(90deg, #4CAF50, #388E3C)',
             color: '#FFFFFF',
-            borderRadius: '4px'
+            borderRadius: '4px',
+            padding: '10px 12px',
+            minHeight: '40px'
           }}
           onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(90deg, #388E3C, #2E7D32)'}
           onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(90deg, #4CAF50, #388E3C)'}
         >
-          + New Style
+          <Plus className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">New Style</span>
+          <span className="sm:hidden">New</span>
         </button>
       </div>
 
@@ -642,9 +731,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         {filteredProjects.length > 0 ? (
           <div
-            className="grid"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
             style={{
-              gridTemplateColumns: 'repeat(6, 1fr)',
               gap: '1px',
               backgroundColor: '#E0E0E0'
             }}

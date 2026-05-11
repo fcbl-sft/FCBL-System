@@ -72,10 +72,10 @@ const AdminPanelPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <header className="bg-white px-6 py-4 flex items-center gap-4" style={{ borderBottom: '1px solid #E0E0E0' }}>
+            <header className="bg-white px-4 md:px-6 py-3 md:py-4 flex items-center gap-3" style={{ borderBottom: '1px solid #E0E0E0' }}>
                 <button
                     onClick={() => navigate(ROUTES.DASHBOARD)}
-                    className="p-2 hover:bg-gray-100 transition-colors rounded"
+                    className="p-2 hover:bg-gray-100 transition-colors rounded flex items-center justify-center min-w-[44px] min-h-[44px]"
                     style={{ color: '#000000' }}
                 >
                     <ArrowLeft className="w-5 h-5" />
@@ -88,7 +88,7 @@ const AdminPanelPage: React.FC = () => {
                 </div>
             </header>
 
-            <div className="p-6">
+            <div className="p-4 md:p-6">
                 {/* Welcome Banner */}
                 <div
                     className="mb-6 p-6 bg-white shadow-sm"

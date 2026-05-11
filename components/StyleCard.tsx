@@ -115,9 +115,9 @@ const StyleCard: React.FC<StyleCardProps> = ({ project, onClick, onEdit, onDelet
                     </div>
                 )}
 
-                {/* Hover Overlay with Edit/Delete Buttons */}
+                {/* Hover Overlay with Edit/Delete Buttons — bottom-right to avoid pending banner */}
                 {(onEdit || onDelete) && (
-                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ zIndex: 2 }}>
+                    <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ zIndex: 2 }}>
                         {onEdit && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); onEdit(e); }}

@@ -2,6 +2,7 @@
  * FCBL Design System - Global Styles
  * Professional design with FCBL brand green gradient (#4CAF50 → #388E3C)
  * Consistent typography, forms, buttons, tables across all pages
+ * RESPONSIVE: Mobile-first approach with breakpoints at 640/768/1024/1280px
  */
 
 /* ========================================
@@ -47,6 +48,24 @@
   --radius-none: 0px;
   --radius-sm: 4px;
   --radius-md: 8px;
+
+  /* Responsive Container Padding */
+  --container-padding-mobile: 16px;
+  --container-padding-tablet: 24px;
+  --container-padding-desktop: 32px;
+}
+
+/* ========================================
+   BASE RESET & MOBILE-FIRST DEFAULTS
+   ======================================== */
+* {
+  box-sizing: border-box;
+}
+
+/* Prevent horizontal overflow on mobile */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 /* ========================================
@@ -61,15 +80,21 @@
 }
 
 .inditex-heading-lg {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .inditex-heading-md {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .inditex-heading-sm {
-  font-size: 13px;
+  font-size: 12px;
+}
+
+@media (min-width: 768px) {
+  .inditex-heading-lg { font-size: 18px; }
+  .inditex-heading-md { font-size: 14px; }
+  .inditex-heading-sm { font-size: 13px; }
 }
 
 .inditex-label {
@@ -93,7 +118,7 @@
 }
 
 /* ========================================
-   BUTTONS
+   BUTTONS — Touch-friendly (min 44px)
    ======================================== */
 .btn-primary {
   display: inline-flex;
@@ -108,6 +133,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 10px 20px;
+  min-height: 44px;
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -138,6 +164,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 10px 20px;
+  min-height: 44px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -162,6 +189,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 10px 20px;
+  min-height: 44px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -185,6 +213,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 10px 20px;
+  min-height: 44px;
   border: 1px solid var(--color-status-red);
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -196,6 +225,11 @@
 }
 
 .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   padding: 8px;
   background: transparent;
   border: none;
@@ -208,19 +242,35 @@
   color: var(--color-gray);
 }
 
+/* Full-width button utility for mobile */
+.btn-full-mobile {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .btn-full-mobile {
+    width: auto;
+  }
+}
+
 /* ========================================
-   FORM INPUTS
+   FORM INPUTS — Touch-friendly (min 44px)
    ======================================== */
 .inditex-input {
   width: 100%;
   padding: 10px 12px;
+  min-height: 44px;
   font-family: var(--font-family);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-black);
   background-color: var(--color-white);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+@media (min-width: 768px) {
+  .inditex-input { font-size: 12px; }
 }
 
 .inditex-input:focus {
@@ -242,14 +292,19 @@
 .inditex-select {
   width: 100%;
   padding: 10px 12px;
+  min-height: 44px;
   font-family: var(--font-family);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-black);
   background-color: var(--color-white);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+@media (min-width: 768px) {
+  .inditex-select { font-size: 12px; }
 }
 
 .inditex-select:focus {
@@ -262,7 +317,7 @@
   width: 100%;
   padding: 10px 12px;
   font-family: var(--font-family);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-black);
   background-color: var(--color-white);
   border: 1px solid var(--color-border);
@@ -272,6 +327,10 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+@media (min-width: 768px) {
+  .inditex-textarea { font-size: 12px; }
+}
+
 .inditex-textarea:focus {
   outline: none;
   border-color: var(--color-primary);
@@ -279,7 +338,7 @@
 }
 
 /* ========================================
-   TABLES
+   TABLES — Responsive
    ======================================== */
 .inditex-table {
   width: 100%;
@@ -313,6 +372,59 @@
 .inditex-table-compact th,
 .inditex-table-compact td {
   padding: 8px 12px;
+}
+
+/* Table responsive wrapper — horizontal scroll on small screens */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile card view for table rows */
+.mobile-card {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .table-desktop { display: none !important; }
+  .mobile-card { display: block; }
+
+  .mobile-card-item {
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .mobile-card-item:last-child { margin-bottom: 0; }
+
+  .mobile-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--color-hover);
+  }
+
+  .mobile-card-row:last-child { border-bottom: none; }
+
+  .mobile-card-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-gray);
+    flex-shrink: 0;
+    margin-right: 12px;
+  }
+
+  .mobile-card-value {
+    font-size: 12px;
+    color: var(--color-black);
+    text-align: right;
+  }
 }
 
 /* ========================================
@@ -349,7 +461,7 @@
 }
 
 /* ========================================
-   TABS
+   TABS — Scrollable on mobile
    ======================================== */
 .inditex-tab {
   font-family: var(--font-family);
@@ -358,12 +470,18 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--color-gray);
-  padding: 12px 16px;
+  padding: 12px 12px;
   border: none;
   border-bottom: 2px solid transparent;
   background: transparent;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+  min-height: 44px;
+}
+
+@media (min-width: 768px) {
+  .inditex-tab { padding: 12px 16px; }
 }
 
 .inditex-tab:hover {
@@ -376,6 +494,19 @@
   border-bottom-color: var(--color-primary);
 }
 
+/* Scrollable tab container */
+.tabs-scroll-container {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: visible; /* note: browsers coerce to auto when overflow-x is set; dropdowns inside use position:fixed */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+
+.tabs-scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
 /* ========================================
    SECTIONS & CARDS
    ======================================== */
@@ -383,12 +514,16 @@
   background-color: var(--color-white);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  padding: var(--spacing-xl);
+  padding: var(--spacing-lg);
+}
+
+@media (min-width: 768px) {
+  .inditex-section { padding: var(--spacing-xl); }
 }
 
 .inditex-section-header {
   font-family: var(--font-family);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -396,6 +531,10 @@
   padding-bottom: 12px;
   border-bottom: 1px solid var(--color-border);
   margin-bottom: 16px;
+}
+
+@media (min-width: 768px) {
+  .inditex-section-header { font-size: 13px; }
 }
 
 .inditex-card {
@@ -447,8 +586,25 @@
   color: var(--color-gray);
 }
 
+/* Visibility utilities */
+.hide-mobile {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .hide-mobile { display: initial; }
+}
+
+.show-mobile-only {
+  display: initial;
+}
+
+@media (min-width: 640px) {
+  .show-mobile-only { display: none; }
+}
+
 /* ========================================
-   FORM GROUPS
+   FORM GROUPS — Responsive
    ======================================== */
 .form-group {
   margin-bottom: var(--spacing-lg);
@@ -466,19 +622,44 @@
 
 .form-row {
   display: grid;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
 }
 
+@media (min-width: 640px) {
+  .form-row { gap: var(--spacing-lg); }
+}
+
+/* Responsive grids - 1 col on mobile, expand on sm/md */
 .form-row-2 {
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .form-row-2 { grid-template-columns: repeat(2, 1fr); }
 }
 
 .form-row-3 {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .form-row-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1024px) {
+  .form-row-3 { grid-template-columns: repeat(3, 1fr); }
 }
 
 .form-row-4 {
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .form-row-4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1024px) {
+  .form-row-4 { grid-template-columns: repeat(4, 1fr); }
 }
 
 /* ========================================
@@ -487,16 +668,24 @@
 .inditex-header {
   background-color: var(--color-white);
   border-bottom: 1px solid var(--color-border);
-  padding: 16px 24px;
+  padding: 12px 16px;
+}
+
+@media (min-width: 768px) {
+  .inditex-header { padding: 16px 24px; }
 }
 
 .inditex-page-title {
   font-family: var(--font-family);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--color-black);
+}
+
+@media (min-width: 768px) {
+  .inditex-page-title { font-size: 14px; }
 }
 
 .inditex-page-subtitle {
@@ -510,9 +699,44 @@
 }
 
 /* ========================================
+   MODAL — Responsive (bottom sheet on mobile)
+   ======================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .modal-overlay {
+    align-items: center;
+  }
+}
+
+.modal-container {
+  background: var(--color-white);
+  width: 100%;
+  max-height: 95vh;
+  overflow-y: auto;
+  border-radius: 16px 16px 0 0;
+}
+
+@media (min-width: 640px) {
+  .modal-container {
+    width: auto;
+    min-width: 440px;
+    max-width: 600px;
+    max-height: 90vh;
+    border-radius: var(--radius-md);
+  }
+}
+
+/* ========================================
    FCBL BRAND OVERRIDES
-   Global overrides for consistent green branding
-   across Tailwind utility classes used in components
    ======================================== */
 
 /* Green gradient header bar - reusable class */
@@ -567,4 +791,104 @@ textarea:focus {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+/* ========================================
+   MOBILE DRAWER / HAMBURGER MENU
+   ======================================== */
+.mobile-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 200;
+  opacity: 0;
+  animation: fadeIn 0.2s ease forwards;
+}
+
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(280px, 80vw);
+  background: var(--color-white);
+  z-index: 201;
+  box-shadow: 2px 0 12px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  animation: slideInLeft 0.25s ease forwards;
+}
+
+@keyframes slideInLeft {
+  to { transform: translateX(0); }
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+.mobile-drawer-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-drawer-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.mobile-drawer-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-gray-dark);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 12px;
+  transition: background 0.15s;
+  min-height: 48px;
+}
+
+.mobile-drawer-item:hover {
+  background: var(--color-hover);
+}
+
+.mobile-drawer-item.active {
+  color: var(--color-primary-dark);
+  font-weight: 700;
+  background: var(--color-primary-bg);
+}
+
+.mobile-drawer-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 8px 0;
+}
+
+/* ========================================
+   CONTAINER PADDING RESPONSIVE
+   ======================================== */
+.page-container {
+  padding: var(--container-padding-mobile);
+}
+
+@media (min-width: 768px) {
+  .page-container { padding: var(--container-padding-tablet); }
+}
+
+@media (min-width: 1024px) {
+  .page-container { padding: var(--container-padding-desktop); }
 }

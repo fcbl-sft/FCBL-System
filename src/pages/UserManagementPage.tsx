@@ -140,11 +140,11 @@ const UserManagementPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <header className="bg-white px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #E0E0E0' }}>
-                <div className="flex items-center gap-4">
+            <header className="bg-white px-4 md:px-6 py-3 md:py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #E0E0E0' }}>
+                <div className="flex items-center gap-3">
                     <button
                         onClick={() => navigate(ROUTES.DASHBOARD)}
-                        className="p-2 hover:bg-gray-100 transition-colors"
+                        className="p-2 hover:bg-gray-100 transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]"
                         style={{ color: '#000000' }}
                     >
                         <ArrowLeft className="w-5 h-5" />
@@ -158,15 +158,16 @@ const UserManagementPage: React.FC = () => {
                 </div>
                 <button
                     onClick={() => navigate(ROUTES.USER_NEW)}
-                    className="flex items-center gap-2 px-4 py-2 btn-primary transition-colors"
+                    className="flex items-center gap-2 px-3 md:px-4 py-2 btn-primary transition-colors"
                     style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}
                 >
                     <Plus className="w-4 h-4" />
-                    Add User
+                    <span className="hidden sm:inline">Add User</span>
+                    <span className="sm:hidden">Add</span>
                 </button>
             </header>
 
-            <div className="p-6">
+            <div className="p-4 md:p-6">
                 {/* Message */}
                 {message && (
                     <div
@@ -220,8 +221,8 @@ const UserManagementPage: React.FC = () => {
                     </select>
                 </div>
 
-                {/* Users Table */}
-                <div className="bg-white shadow-lg overflow-hidden" style={{ border: '1px solid #E0E0E0' }}>
+                {/* Desktop Users Table */}
+                <div className="hidden md:block bg-white shadow-lg overflow-hidden" style={{ border: '1px solid #E0E0E0' }}>
                     <table className="w-full">
                         <thead>
                             <tr style={{ backgroundColor: '#FAFAFA', borderBottom: '1px solid #E0E0E0' }}>
@@ -348,6 +349,54 @@ const UserManagementPage: React.FC = () => {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-3">
+                    {filteredUsers.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500 text-sm">No users found</div>
+                    ) : (
+                        filteredUsers.map(user => (
+                            <div key={user.id} className="bg-white rounded-lg p-4" style={{ border: '1px solid #E0E0E0' }}>
+                                <div className="flex items-start justify-between mb-3">
+                                    <div>
+                                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#000' }}>{user.name || 'No name'}</div>
+                                        <div style={{ fontSize: '12px', color: '#666' }}>{user.email}</div>
+                                    </div>
+                                    <span
+                                        className="inline-block px-2 py-1"
+                                        style={{
+                                            backgroundColor: user.is_active ? '#ECFDF5' : '#FEF2F2',
+                                            color: user.is_active ? '#047857' : '#DC2626',
+                                            fontSize: '10px', fontWeight: 700, textTransform: 'uppercase'
+                                        }}
+                                    >
+                                        {user.is_active ? 'Active' : 'Disabled'}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span
+                                        className="inline-block px-2 py-1"
+                                        style={{
+                                            backgroundColor: user.role === 'super_admin' ? '#000' : '#F3F4F6',
+                                            color: user.role === 'super_admin' ? '#FFF' : '#374151',
+                                            fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px'
+                                        }}
+                                    >
+                                        {ROLE_LABELS[user.role] || user.role}
+                                    </span>
+                                    {canManageUser(user) && (
+                                        <div className="flex items-center gap-1">
+                                            <button onClick={() => navigate(`/admin/users/${user.id}/edit`)} className="p-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded" title="Edit" disabled={actionLoading === user.id}><Edit2 className="w-4 h-4" /></button>
+                                            <button onClick={() => handleResetPassword(user)} className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded" title="Reset Password" disabled={actionLoading === user.id}><Key className="w-4 h-4" /></button>
+                                            <button onClick={() => handleToggleActive(user)} className="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded" title={user.is_active ? 'Disable' : 'Enable'} disabled={actionLoading === user.id}>{user.is_active ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}</button>
+                                            {user.role !== 'super_admin' && (<button onClick={() => handleDelete(user)} className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded" title="Delete" disabled={actionLoading === user.id}><Trash2 className="w-4 h-4" /></button>)}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
 
                 {/* Summary */}

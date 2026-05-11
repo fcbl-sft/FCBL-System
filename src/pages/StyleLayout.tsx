@@ -39,7 +39,9 @@ const StyleLayout: React.FC = () => {
 
     // Commercial dropdown state
     const [showCommercialDropdown, setShowCommercialDropdown] = useState(false);
+    const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
     const commercialDropdownRef = useRef<HTMLDivElement>(null);
+    const commercialBtnRef = useRef<HTMLButtonElement>(null);
 
     // Commercial document options
     const commercialItems = [
@@ -54,15 +56,27 @@ const StyleLayout: React.FC = () => {
         { id: 'noc-bank', label: 'NOC Bank', path: null, active: false },
     ];
 
-    // Close dropdown when clicking outside
+    // Close dropdown when clicking outside or scrolling
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (commercialDropdownRef.current && !commercialDropdownRef.current.contains(event.target as Node)) {
+            if (
+                commercialBtnRef.current && !commercialBtnRef.current.contains(event.target as Node) &&
+                commercialDropdownRef.current && !commercialDropdownRef.current.contains(event.target as Node)
+            ) {
                 setShowCommercialDropdown(false);
+                setDropdownPos(null);
             }
         };
+        const handleScroll = () => {
+            setShowCommercialDropdown(false);
+            setDropdownPos(null);
+        };
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        window.addEventListener('scroll', handleScroll, true);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            window.removeEventListener('scroll', handleScroll, true);
+        };
     }, []);
 
     const project = id ? getProject(id) : undefined;
@@ -151,20 +165,21 @@ const StyleLayout: React.FC = () => {
     return (
         <div className="flex flex-col h-screen bg-white">
             {/* PERSISTENT HEADER */}
-            <header className="bg-white px-6 py-4 flex items-center gap-4 shrink-0" style={{ borderBottom: '1px solid #E0E0E0' }}>
+            <header className="bg-white px-3 md:px-6 py-3 flex items-center gap-2 md:gap-4 shrink-0" style={{ borderBottom: '1px solid #E0E0E0' }}>
                 <button
                     onClick={handleBack}
-                    className="p-2 transition-colors"
+                    className="p-2 transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]"
                     style={{ color: '#000000' }}
                     title="Back to Dashboard"
                 >
                     <ArrowLeft className="w-5 h-5" />
                 </button>
-                <div className="flex-grow">
-                    <h1 style={{ fontWeight: 700, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#000000' }}>
+                <div className="flex-grow min-w-0">
+                    <h1 className="truncate" style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#000000' }}>
                         {project.title}
                     </h1>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    {/* Tags — hidden on mobile to save space */}
+                    <div className="hidden md:flex items-center gap-2 mt-1 flex-wrap">
                         {project.styleNumber && (
                             <span
                                 style={{
@@ -256,17 +271,17 @@ const StyleLayout: React.FC = () => {
                 </div>
 
                 {/* Edit/Delete Buttons */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                     <button
                         onClick={() => setShowEditModal(true)}
-                        className="p-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded transition-colors"
+                        className="p-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]"
                         title="Edit Style"
                     >
                         <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                         onClick={() => setShowDeleteModal(true)}
-                        className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                        className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-50 rounded transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]"
                         title="Delete Style"
                     >
                         <Trash2 className="w-4 h-4" />
@@ -286,8 +301,11 @@ const StyleLayout: React.FC = () => {
                 </span>
             </header>
 
-            {/* PERSISTENT TAB NAVIGATION */}
-            <nav className="bg-white px-6 flex justify-center gap-0 shrink-0" style={{ borderBottom: '1px solid #E0E0E0', overflow: 'visible' }}>
+            {/* PERSISTENT TAB NAVIGATION — horizontally scrollable on mobile */}
+            <nav
+                className="bg-white shrink-0 tabs-scroll-container"
+                style={{ borderBottom: '1px solid #E0E0E0' }}
+            >
                 {visibleTabs.map(tab => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -295,13 +313,20 @@ const StyleLayout: React.FC = () => {
                     // Special handling for Commercial tab - show dropdown
                     if (tab.id === 'commercial') {
                         return (
-                            <div key={tab.id} className="relative" ref={commercialDropdownRef} style={{ position: 'relative' }}>
+                            <div key={tab.id} style={{ position: 'relative' }}>
                                 <button
+                                    ref={commercialBtnRef}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        console.log('Commercial clicked, current state:', showCommercialDropdown);
-                                        setShowCommercialDropdown(!showCommercialDropdown);
+                                        if (showCommercialDropdown) {
+                                            setShowCommercialDropdown(false);
+                                            setDropdownPos(null);
+                                        } else {
+                                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                            setDropdownPos({ top: rect.bottom, left: rect.left });
+                                            setShowCommercialDropdown(true);
+                                        }
                                     }}
                                     className="flex items-center gap-2 whitespace-nowrap transition-colors cursor-pointer"
                                     style={{
@@ -322,19 +347,18 @@ const StyleLayout: React.FC = () => {
                                     <ChevronDown className={`w-3 h-3 transition-transform ${showCommercialDropdown ? 'rotate-180' : ''}`} />
                                 </button>
 
-                                {/* Commercial Dropdown Menu */}
-                                {showCommercialDropdown && (
+                                {/* Commercial Dropdown — rendered fixed to escape overflow container */}
+                                {showCommercialDropdown && dropdownPos && (
                                     <div
+                                        ref={commercialDropdownRef}
                                         style={{
-                                            position: 'absolute',
-                                            top: '100%',
-                                            left: '0',
-                                            marginTop: '0',
+                                            position: 'fixed',
+                                            top: `${dropdownPos.top}px`,
+                                            left: `${dropdownPos.left}px`,
                                             backgroundColor: '#FFFFFF',
                                             border: '1px solid #E0E0E0',
-                                            borderTop: 'none',
                                             borderRadius: '0 0 4px 4px',
-                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                                            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
                                             zIndex: 9999,
                                             minWidth: '220px'
                                         }}

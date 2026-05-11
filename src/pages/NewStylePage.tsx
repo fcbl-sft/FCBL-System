@@ -4,12 +4,13 @@
  */
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Upload, Image as ImageIcon, X } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Upload, Image as ImageIcon, X, Loader2 } from 'lucide-react';
 import { useProjects } from '../context/ProjectContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import ROUTES from '../router/routes';
 import { PONumber, ProductColor, TechPackData } from '../../types';
 import { INITIAL_DATA } from '../../constants';
+import { supabase } from '../../lib/supabase';
 
 const NewStylePage: React.FC = () => {
     useDocumentTitle('New Style');
@@ -62,18 +63,56 @@ const NewStylePage: React.FC = () => {
 
     // Saving state
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [imageUploadError, setImageUploadError] = useState<string | null>(null);
 
     const imageInputRef = useRef<HTMLInputElement>(null);
 
-    // Image upload handler
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Image upload handler — uploads to Supabase Storage for a proper public URL
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                setProductImage(event.target?.result as string);
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        // Validate size (5 MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            setImageUploadError('Image must be under 5 MB.');
+            return;
+        }
+
+        setIsUploadingImage(true);
+        setImageUploadError(null);
+
+        try {
+            const ext = file.name.split('.').pop();
+            const path = `product-images/${Date.now()}.${ext}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('product-images')
+                .upload(path, file, { upsert: true });
+
+            if (uploadError) {
+                // Fallback: use base64 if storage upload fails (e.g., bucket not set up yet)
+                console.warn('[ImageUpload] Storage upload failed, falling back to base64:', uploadError.message);
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    setProductImage(event.target?.result as string);
+                };
+                reader.readAsDataURL(file);
+                return;
+            }
+
+            const { data: urlData } = supabase.storage
+                .from('product-images')
+                .getPublicUrl(path);
+
+            setProductImage(urlData.publicUrl);
+        } catch (err: any) {
+            setImageUploadError('Upload failed. Please try again.');
+            console.error('[ImageUpload] error:', err);
+        } finally {
+            setIsUploadingImage(false);
+            // Reset input so same file can be re-selected
+            if (imageInputRef.current) imageInputRef.current.value = '';
         }
     };
 
@@ -212,10 +251,10 @@ const NewStylePage: React.FC = () => {
             <div style={{ height: '3px', background: 'linear-gradient(90deg, #4CAF50, #388E3C)', width: '100%' }} />
 
             {/* Form Content */}
-            <div className="max-w-2xl mx-auto px-6 py-8">
-                <div className="space-y-6">
+            <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 md:py-8">
+                <div className="space-y-5">
                     {/* Style Name + Article Number (same row) */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Style Name
@@ -316,7 +355,7 @@ const NewStylePage: React.FC = () => {
                     </div>
 
                     {/* PO Receive Date + Shipment Date (same row) */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 PO Receive Date
@@ -361,7 +400,7 @@ const NewStylePage: React.FC = () => {
                             <span className="w-6 h-6 bg-green-600 text-white rounded flex items-center justify-center text-[10px] font-bold">TS</span>
                             Technical Specifications
                         </h3>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Gauge</label>
                                 <input
@@ -460,7 +499,7 @@ const NewStylePage: React.FC = () => {
                                     placeholder="e.g., V-Neck Rib, Crew Neck"
                                 />
                             </div>
-                            <div className="col-span-2">
+                            <div className="col-span-1 sm:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Sample Comment</label>
                                 <textarea
                                     value={sampleComment}
@@ -479,7 +518,7 @@ const NewStylePage: React.FC = () => {
                             <span className="w-6 h-6 bg-gray-800 text-white rounded flex items-center justify-center text-[10px] font-bold">MI</span>
                             Machine Information
                         </h3>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Machine Name</label>
                                 <input
@@ -540,7 +579,7 @@ const NewStylePage: React.FC = () => {
                         <div className="space-y-2">
                             {poNumbers.map(po => (
                                 <div key={po.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                    <div className="flex-1 grid grid-cols-3 gap-2">
+                                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
                                         <input
                                             type="text"
                                             value={po.number}
@@ -636,16 +675,26 @@ const NewStylePage: React.FC = () => {
                                 </div>
                             ) : (
                                 <div className="w-24 h-24 border-2 border-dashed border-gray-300 rounded flex items-center justify-center bg-gray-50">
-                                    <ImageIcon className="w-8 h-8 text-gray-300" />
+                                    {isUploadingImage
+                                        ? <Loader2 className="w-6 h-6 text-green-600 animate-spin" />
+                                        : <ImageIcon className="w-8 h-8 text-gray-300" />}
                                 </div>
                             )}
-                            <button
-                                onClick={() => imageInputRef.current?.click()}
-                                className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-2"
-                            >
-                                <Upload className="w-4 h-4" />
-                                Upload Image
-                            </button>
+                            <div className="flex flex-col gap-1">
+                                <button
+                                    onClick={() => imageInputRef.current?.click()}
+                                    disabled={isUploadingImage}
+                                    className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isUploadingImage
+                                        ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</>
+                                        : <><Upload className="w-4 h-4" /> Upload Image</>}
+                                </button>
+                                {imageUploadError && (
+                                    <p className="text-xs text-red-500">{imageUploadError}</p>
+                                )}
+                                <p className="text-xs text-gray-400">JPG, PNG, WebP — max 5 MB</p>
+                            </div>
                             <input
                                 ref={imageInputRef}
                                 type="file"
@@ -732,18 +781,18 @@ const NewStylePage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex justify-end gap-3 mt-10 pt-6 border-t border-gray-200">
+                {/* Action Buttons — stacked full-width on mobile */}
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
                     <button
                         onClick={handleBack}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                        className="w-full sm:w-auto px-4 py-3 sm:py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleCreate}
                         disabled={isSaving}
-                        className="px-4 py-2 btn-primary text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full sm:w-auto px-6 py-3 sm:py-2 btn-primary text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isSaving ? 'Creating...' : 'Create Style'}
                     </button>

@@ -81,7 +81,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
 
           {/* Login Card */}
           <div className="bg-white shadow-lg" style={{ border: '1px solid #E0E0E0' }}>
-            <div className="p-8">
+            <div className="p-6 sm:p-8">
               <h2
                 className="text-center mb-6"
                 style={{ fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#333' }}

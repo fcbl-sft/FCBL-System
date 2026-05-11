@@ -116,10 +116,10 @@ const ProfilePage: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <header className="bg-white px-6 py-4 flex items-center gap-4" style={{ borderBottom: '1px solid #E0E0E0' }}>
+            <header className="bg-white px-4 md:px-6 py-3 md:py-4 flex items-center gap-3" style={{ borderBottom: '1px solid #E0E0E0' }}>
                 <button
                     onClick={() => navigate(ROUTES.DASHBOARD)}
-                    className="p-2 hover:bg-gray-100 transition-colors"
+                    className="p-2 hover:bg-gray-100 transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]"
                     style={{ color: '#000000' }}
                 >
                     <ArrowLeft className="w-5 h-5" />
@@ -129,7 +129,7 @@ const ProfilePage: React.FC = () => {
                 </h1>
             </header>
 
-            <div className="max-w-2xl mx-auto p-6">
+            <div className="max-w-2xl mx-auto p-4 md:p-6">
                 {/* Message */}
                 {message && (
                     <div
