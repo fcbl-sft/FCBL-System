@@ -145,10 +145,20 @@ export async function updateUser(
 }
 
 /**
- * Delete a user (soft delete - set is_active to false)
+ * Permanently delete a user (hard delete from auth.users and profiles).
+ * Calls the backend API which uses the Supabase Admin API with service role key.
  */
 export async function deleteUser(userId: string): Promise<{ success: boolean; error: string | null }> {
-    return updateUser(userId, { is_active: false });
+    try {
+        const { error } = await api.delete<{ success: boolean; error: string | null }>(`/users/${userId}`);
+        if (error) {
+            return { success: false, error };
+        }
+        return { success: true, error: null };
+    } catch (err) {
+        console.error('Delete user error:', err);
+        return { success: false, error: 'Failed to delete user' };
+    }
 }
 
 /**

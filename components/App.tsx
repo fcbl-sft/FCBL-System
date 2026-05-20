@@ -14,6 +14,7 @@ import { Project, UserRole, Inspection, PPMeeting as PPMeetingType, MaterialCont
 import { INITIAL_DATA } from '../constants';
 import { supabase } from '../lib/supabase';
 import { signIn as authSignIn } from '../src/services/authService';
+import { projectService, mapFromDb } from '../src/services/projectService';
 
 const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<'login' | 'dashboard' | 'editor' | 'inspection' | 'materialControl' | 'ppMeeting' | 'invoice' | 'packing' | 'orderSheet' | 'consumption'>('login');
@@ -31,51 +32,9 @@ const App: React.FC = () => {
   const activeInspection = activeProject?.inspections.find((i: Inspection) => i.id === activeInspectionId);
   const activeInvoice = activeProject?.invoices?.find((i: Invoice) => i.id === activeInvoiceId);
 
-  const mapToDB = (proj: Partial<Project>) => {
-    const dbObj: any = {};
-    if (proj.id) dbObj.id = proj.id;
-    if (proj.title) dbObj.title = proj.title;
-    if (proj.status) dbObj.status = proj.status;
-    if (proj.mainStatus !== undefined) dbObj.main_status = proj.mainStatus;
-    if (proj.poNumbers) dbObj.po_numbers = proj.poNumbers;
-    if (proj.updatedAt) dbObj.updated_at = proj.updatedAt;
-    if (proj.techPackFiles) dbObj.tech_pack_files = proj.techPackFiles;
-    if (proj.pages) dbObj.pages = proj.pages;
-    if (proj.comments) dbObj.comments = proj.comments;
-    if (proj.inspections) dbObj.inspections = proj.inspections;
-    if (proj.ppMeetings) dbObj.pp_meetings = proj.ppMeetings;
-    if (proj.materialControl) dbObj.material_control = proj.materialControl;
-    if (proj.invoices) dbObj.invoices = proj.invoices;
-    if (proj.packing) dbObj.packing = proj.packing;
-    if (proj.orderSheet) dbObj.order_sheet = proj.orderSheet;
-    if (proj.consumption) dbObj.consumption = proj.consumption;
-    if (proj.materialRemarks !== undefined) dbObj.material_remarks = proj.materialRemarks;
-    if (proj.materialAttachments !== undefined) dbObj.material_attachments = proj.materialAttachments;
-    if (proj.materialComments !== undefined) dbObj.material_comments = proj.materialComments;
-    return dbObj;
-  };
-
-  const mapFromDB = (row: any): Project => ({
-    id: row.id,
-    title: row.title,
-    poNumbers: row.po_numbers || [],
-    status: row.status,
-    mainStatus: row.main_status || 'DEVELOPMENT',
-    updatedAt: row.updated_at,
-    techPackFiles: row.tech_pack_files || [],
-    pages: row.pages || [],
-    comments: row.comments || [],
-    inspections: row.inspections || [],
-    ppMeetings: row.pp_meetings || [],
-    materialControl: row.material_control || [],
-    invoices: row.invoices || [],
-    packing: row.packing || createDefaultPacking(),
-    orderSheet: row.order_sheet,
-    consumption: row.consumption,
-    materialRemarks: row.material_remarks || '',
-    materialAttachments: row.material_attachments || [],
-    materialComments: row.material_comments || []
-  });
+  // Legacy mapFromDB delegates to the canonical projectService mapper
+  // to ensure ALL extended fields (brand, gauge, machine specs, etc.) are populated.
+  const mapFromDB = (row: any): Project => mapFromDb(row);
 
   useEffect(() => {
     if (currentUserRole) {
@@ -86,13 +45,9 @@ const App: React.FC = () => {
   const fetchProjects = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('updated_at', { ascending: false });
-
-      if (error) throw error;
-      setProjects((data || []).map(mapFromDB));
+      const { data, error } = await projectService.getProjects();
+      if (error) throw new Error(error);
+      setProjects(data || []);
       setLoading(false);
     } catch (err: any) {
       if (err.name === 'AbortError' || err.message?.includes('AbortError')) {
@@ -131,13 +86,12 @@ const App: React.FC = () => {
   };
 
   const updateProjectInDB = async (projectId: string, updates: Partial<Project>) => {
+    // Optimistic UI update
     setProjects(prev => prev.map(p => p.id === projectId ? { ...p, ...updates } : p));
-    try {
-      const dbUpdates = mapToDB({ ...updates, updatedAt: new Date().toISOString() });
-      const { error } = await supabase.from('projects').update(dbUpdates).eq('id', projectId);
-      if (error) throw error;
-    } catch (err: any) {
-      console.error("Database update failed:", err);
+    // Delegate to projectService which uses the complete mapToDb (all 35+ fields)
+    const { error } = await projectService.updateProject(projectId, updates);
+    if (error) {
+      console.error('[App] updateProjectInDB failed:', error);
     }
   };
 
@@ -174,10 +128,10 @@ const App: React.FC = () => {
     };
 
     try {
-      const { error } = await supabase.from('projects').insert(mapToDB(newProj));
-      if (error) throw error;
-      setProjects(prev => [newProj, ...prev]);
-      setActiveProjectId(newProj.id);
+      const { data: created, error } = await projectService.createProject(newProj);
+      if (error || !created) throw new Error(error || 'Create failed');
+      setProjects(prev => [created, ...prev]);
+      setActiveProjectId(created.id);
       setCurrentScreen('editor');
     } catch (err: any) {
       console.error("Failed to create tech pack:", err);
@@ -387,13 +341,13 @@ const App: React.FC = () => {
               materialComments: []
             };
             try {
-              const { error } = await supabase.from('projects').insert(mapToDB(newProj));
-              if (error) throw error;
-              setProjects(prev => [newProj, ...prev]);
+              const { data: created, error } = await projectService.createProject(newProj);
+              if (error || !created) throw new Error(error || 'Create failed');
+              setProjects(prev => [created, ...prev]);
             } catch (err: any) { console.error(err); }
           }}
           onLogout={handleLogout}
-          onDeleteProject={async (id: string) => { if (confirm("Delete Style?")) { await supabase.from('projects').delete().eq('id', id); setProjects(p => p.filter(x => x.id !== id)); } }}
+          onDeleteProject={async (id: string) => { if (confirm("Delete Style?")) { await projectService.deleteProject(id); setProjects(p => p.filter(x => x.id !== id)); } }}
           onRenameProject={(id: string, title: string) => updateProjectInDB(id, { title })}
           onManageInspection={handleManageInspection}
           onManageInvoice={handleManageInvoice}

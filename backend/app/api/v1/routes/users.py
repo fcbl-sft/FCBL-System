@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
 
 from app.core.supabase import get_supabase_admin
+from app.config import get_settings
 from app.models.user_models import CreateUserRequest
 
 logger = logging.getLogger(__name__)
@@ -172,3 +173,71 @@ async def update_user_profile(user_id: str, data: Dict[str, Any]):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{user_id}")
+async def delete_user(user_id: str):
+    """
+    Permanently hard-delete a user from auth.users and profiles.
+
+    Uses a direct HTTP DELETE to the Supabase Admin REST API via httpx
+    (with the service_role key as Bearer token) to guarantee a true hard
+    delete.  The supabase-py auth.admin.delete_user() helper performs a
+    soft-delete (sets banned_until / deleted_at) in supabase-py v2, which
+    is why the user was still visible after calling it.
+    """
+    import httpx
+
+    settings = get_settings()
+    service_role_key = settings.supabase_service_role_key
+    supabase_url = settings.supabase_url
+
+    if not service_role_key or service_role_key == "YOUR_SERVICE_ROLE_KEY_HERE":
+        raise HTTPException(
+            status_code=500,
+            detail="SUPABASE_SERVICE_ROLE_KEY is not configured in backend/.env"
+        )
+
+    headers = {
+        "Authorization": f"Bearer {service_role_key}",
+        "apikey": service_role_key,
+        "Content-Type": "application/json",
+    }
+
+    try:
+        # ── Step 1: Hard-delete from auth.users via Admin REST API ──────────
+        admin_delete_url = f"{supabase_url}/auth/v1/admin/users/{user_id}"
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.delete(admin_delete_url, headers=headers)
+
+        if response.status_code not in (200, 204):
+            error_body = response.text
+            logger.error(
+                f"Supabase Admin API rejected delete for user {user_id}: "
+                f"status={response.status_code} body={error_body}"
+            )
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"Failed to delete auth user: {error_body}",
+            )
+
+        logger.info(f"Auth user {user_id} hard-deleted via Admin REST API (status {response.status_code})")
+
+        # ── Step 2: Explicitly delete the profiles row (belt-and-suspenders) ─
+        # The FK cascade should handle this, but we do it explicitly to be safe.
+        try:
+            supabase_admin = get_supabase_admin()
+            supabase_admin.from_("profiles").delete().eq("id", user_id).execute()
+            logger.info(f"Profile row for {user_id} deleted")
+        except Exception as profile_err:
+            # Not fatal – cascade may have already removed it
+            logger.warning(f"Profile cleanup for {user_id} skipped: {profile_err}")
+
+        return {"success": True, "error": None}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error deleting user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

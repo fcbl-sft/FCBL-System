@@ -19,13 +19,10 @@ const TechPackContent: React.FC = () => {
     if (!project) return <LoadingSpinner message="Loading..." />;
 
     const handleUpdateProject = (updatedProject: Project) => {
-        // Only send the fields that TechPackEditor can modify
-        updateProject(project.id, {
-            techPackFiles: updatedProject.techPackFiles,
-            productImage: updatedProject.productImage,
-            productColors: updatedProject.productColors,
-            techPackWorkflow: updatedProject.techPackWorkflow,
-        });
+        // Send all modified fields — not just a fixed 4-field subset — so that
+        // changes to pages, files, workflow, colors, etc. are all persisted.
+        const { id: _id, createdAt: _createdAt, ...updates } = updatedProject;
+        updateProject(project.id, updates);
     };
 
     const handleStatusChange = (newStatus: ProjectStatus) => {

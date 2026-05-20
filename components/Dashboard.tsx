@@ -239,7 +239,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const MAIN_STAGES: MainStatus[] = ['DEVELOPMENT', 'PRE-PRODUCTION', 'PRODUCTION', 'FINALIZED', 'CANCELLED'];
   const PRODUCTION_SUBSTAGES: ProductionStage[] = ['Tech Pack', 'Order Sheet', 'Consumption', 'PP Meeting', 'MQ Control', 'Commercial', 'QC Inspection'];
   const APPROVAL_STATUSES: string[] = ['DRAFT', 'PENDING', 'APPROVED', 'REJECTED'];
-  const ALL_STATUS_OPTIONS = [...MAIN_STAGES, ...PRODUCTION_SUBSTAGES, ...APPROVAL_STATUSES];
+  const ALL_STATUS_OPTIONS = [...MAIN_STAGES, ...APPROVAL_STATUSES];
 
   const handleSelectAllStatuses = () => {
     if (selectedStatuses.length === ALL_STATUS_OPTIONS.length) {
@@ -261,8 +261,9 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const handleEditSave = (updates: Partial<Project>) => {
     if (editingProject) {
-      onUpdateProject(editingProject.id, updates);
-      setEditingProject(null);
+      const projectId = editingProject.id;
+      setEditingProject(null); // Close modal FIRST to prevent stale re-init
+      onUpdateProject(projectId, updates);
     }
   };
 
@@ -490,19 +491,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                       </span>
                       {stage}
                     </button>
-                    {/* Production Sub-stages (nested under PRODUCTION) */}
-                    {stage === 'PRODUCTION' && PRODUCTION_SUBSTAGES.map(sub => (
-                      <button
-                        key={sub}
-                        onClick={() => handleStatusToggle(sub)}
-                        className="w-full text-left pl-8 pr-3 py-1.5 text-xs font-medium hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span className={`w-4 h-4 border rounded flex items-center justify-center ${selectedStatuses.includes(sub) ? 'bg-green-600 border-green-600' : 'border-gray-300'}`}>
-                          {selectedStatuses.includes(sub) && <Check className="w-3 h-3 text-white" />}
-                        </span>
-                        {sub}
-                      </button>
-                    ))}
                   </div>
                 ))}
                 {/* Divider */}
@@ -535,13 +523,6 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
             )}
           </div>
-
-          {/* Static filters — hidden on mobile */}
-          {['MILESTONES', 'SAMPLE TASKS'].map(filter => (
-            <button key={filter} className="hidden lg:flex items-center gap-1 text-xs font-bold uppercase text-gray-600">
-              {filter} <ChevronDown className="w-3 h-3" />
-            </button>
-          ))}
 
           {/* TEAM, BRAND, FACTORY Filters — hidden on mobile */}
           <div className="hidden md:flex items-center gap-3">

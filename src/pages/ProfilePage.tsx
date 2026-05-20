@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import * as authService from '../services/authService';
+import { supabase } from '../../lib/supabase';
 import { ROLE_LABELS } from '../constants/permissionConstants';
 import ROUTES from '../router/routes';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -18,6 +19,7 @@ const ProfilePage: React.FC = () => {
 
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isPasswordSaving, setIsPasswordSaving] = useState(false);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -90,10 +92,37 @@ const ProfilePage: React.FC = () => {
             return;
         }
 
-        setIsSaving(true);
+        setIsPasswordSaving(true);
 
         try {
-            const result = await authService.updatePassword(passwordData.newPassword);
+            // Listen for USER_UPDATED event as the authoritative success signal.
+            // supabase.auth.updateUser() can emit 422s before the final 200, and
+            // the auth state change can interfere with promise resolution.
+            let authEventResolved = false;
+            const authEventPromise = new Promise<{ error: string | null }>((resolve) => {
+                const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+                    if (event === 'USER_UPDATED' && !authEventResolved) {
+                        authEventResolved = true;
+                        subscription.unsubscribe();
+                        resolve({ error: null });
+                    }
+                });
+
+                // Safety timeout — resolve as error after 15s if no event fires
+                setTimeout(() => {
+                    if (!authEventResolved) {
+                        authEventResolved = true;
+                        subscription.unsubscribe();
+                        resolve({ error: 'Request timed out. Please try again.' });
+                    }
+                }, 15000);
+            });
+
+            // Fire the update (may emit 422s internally before succeeding)
+            const updatePromise = authService.updatePassword(passwordData.newPassword);
+
+            // Race: whichever resolves first wins
+            const result = await Promise.race([authEventPromise, updatePromise]);
 
             if (result.error) {
                 setPasswordErrors([result.error]);
@@ -105,7 +134,7 @@ const ProfilePage: React.FC = () => {
         } catch (err) {
             setPasswordErrors(['An error occurred while updating password']);
         } finally {
-            setIsSaving(false);
+            setIsPasswordSaving(false);
         }
     };
 
@@ -363,7 +392,7 @@ const ProfilePage: React.FC = () => {
                                         }}
                                         className="flex-1 py-3 border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
                                         style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}
-                                        disabled={isSaving}
+                                        disabled={isPasswordSaving}
                                     >
                                         Cancel
                                     </button>
@@ -371,9 +400,9 @@ const ProfilePage: React.FC = () => {
                                         onClick={handlePasswordChange}
                                         className="flex-1 py-3 btn-primary transition-colors"
                                         style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}
-                                        disabled={isSaving}
+                                        disabled={isPasswordSaving}
                                     >
-                                        {isSaving ? 'Updating...' : 'Update Password'}
+                                        {isPasswordSaving ? 'Updating...' : 'Update Password'}
                                     </button>
                                 </div>
                             </div>
