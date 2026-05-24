@@ -1,15 +1,17 @@
 """
 Users API routes - Admin user management.
 Uses service role key to bypass RLS for updating other users' profiles.
+All endpoints require JWT authentication + admin role.
 """
 import logging
 from typing import Any, Dict
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.supabase import get_supabase_admin
 from app.config import get_settings
 from app.models.user_models import CreateUserRequest
+from app.core.auth_middleware import require_admin
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +59,7 @@ DEFAULT_ROLE_ACCESS = {
 
 
 @router.post("/")
-async def create_user(data: CreateUserRequest):
+async def create_user(data: CreateUserRequest, _admin=Depends(require_admin)):
     """
     Create a new user via Supabase Admin API.
     Uses service role key to call auth.admin.create_user().
@@ -144,7 +146,7 @@ async def create_user(data: CreateUserRequest):
 
 
 @router.patch("/{user_id}")
-async def update_user_profile(user_id: str, data: Dict[str, Any]):
+async def update_user_profile(user_id: str, data: Dict[str, Any], _admin=Depends(require_admin)):
     """
     Update a user's profile (role, section_access, name, etc.).
     Uses service role client to bypass RLS - admin only operation.
@@ -176,7 +178,7 @@ async def update_user_profile(user_id: str, data: Dict[str, Any]):
 
 
 @router.delete("/{user_id}")
-async def delete_user(user_id: str):
+async def delete_user(user_id: str, _admin=Depends(require_admin)):
     """
     Permanently hard-delete a user from auth.users and profiles.
 

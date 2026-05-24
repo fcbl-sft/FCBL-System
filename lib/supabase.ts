@@ -6,10 +6,16 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
  * Configured with auto-refresh and session persistence to prevent stale token issues.
  */
 
-// Prefer env vars (set in Vercel dashboard or .env locally).
-// Fallback values ensure the app works even if env vars are not configured.
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://zilbigcueizkfvvpuwjp.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppbGJpZ2N1ZWl6a2Z2dnB1d2pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwODEwODEsImV4cCI6MjA4MjY1NzA4MX0.LJZCuh-qh81XXHISpjfq8_LHfz6HiLlUgK8Y95djnp8';
+// Supabase credentials MUST be set via environment variables.
+// Never hardcode keys — they will be committed to version control.
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'Supabase configuration missing. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.'
+  );
+}
 
 // Singleton pattern: only one GoTrueClient instance is ever created
 let _supabaseInstance: SupabaseClient | null = null;

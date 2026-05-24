@@ -205,8 +205,8 @@ CREATE TRIGGER on_auth_user_created
 -- NOTE: You must create the Super Admin user manually via Supabase Dashboard:
 -- 1. Go to Authentication > Users
 -- 2. Click "Add User"
--- 3. Email: sft.salman94@gmail.com
--- 4. Password: *#Salman042
+-- 3. Email: <your-admin-email>
+-- 4. Password: <use-a-strong-unique-password>
 -- 5. Then run the following SQL to set as super_admin:
 
 -- UPDATE public.profiles 

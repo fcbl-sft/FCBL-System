@@ -10,10 +10,16 @@ Usage:
 """
 import sys, os
 
-# ── Config ────────────────────────────────────────────────────────────────────
-SUPABASE_URL      = "https://zilbigcueizkfvvpuwjp.supabase.co"
-SERVICE_ROLE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppbGJpZ2N1ZWl6a2Z2dnB1d2pwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzA4MTA4MSwiZXhwIjoyMDgyNjU3MDgxfQ.j1z2IUX1TQbBgssbFzsi9xGkYqbFqKAgi04lL3lLtdo"
-PROJECT_REF       = "zilbigcueizkfvvpuwjp"
+# ── Config — loaded from environment (NEVER hardcode credentials) ────────────
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+PROJECT_REF = SUPABASE_URL.replace("https://", "").replace(".supabase.co", "") if SUPABASE_URL else ""
+
+if not SUPABASE_URL or not SERVICE_ROLE_KEY:
+    print("ERROR: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables must be set.")
+    print("  Example: set SUPABASE_URL=https://yourproject.supabase.co")
+    print("  Example: set SUPABASE_SERVICE_ROLE_KEY=eyJ...")
+    sys.exit(1)
 
 # Supabase direct DB connection (session pooler, port 5432)
 DB_HOST     = f"db.{PROJECT_REF}.supabase.co"
@@ -184,7 +190,7 @@ if __name__ == "__main__":
             print("\n" + "=" * 60)
             print("MANUAL STEPS REQUIRED")
             print("=" * 60)
-            print("1. Open: https://supabase.com/dashboard/project/zilbigcueizkfvvpuwjp/sql/new")
+            print(f"1. Open: https://supabase.com/dashboard/project/{PROJECT_REF}/sql/new")
             print("2. Paste and run the contents of:")
             print("   supabase/migrations/010_add_all_missing_columns.sql")
             sys.exit(1)

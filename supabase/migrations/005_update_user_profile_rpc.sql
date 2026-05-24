@@ -57,6 +57,5 @@ BEGIN
 END;
 $$;
 
--- Grant execute permission to authenticated and anon roles
+-- Grant execute permission to authenticated users only (NEVER anon)
 GRANT EXECUTE ON FUNCTION update_user_profile(UUID, JSONB) TO authenticated;
-GRANT EXECUTE ON FUNCTION update_user_profile(UUID, JSONB) TO anon;

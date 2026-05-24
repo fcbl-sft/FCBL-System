@@ -100,8 +100,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // ================================================
 
     const loadProfile = useCallback(async (authUser: any, setUserFn: typeof setUser) => {
-        console.log('[Auth] Session found:', authUser.id);
-        console.log('[Auth] Fetching profile from database...');
 
         const { data: profileData, error: profileError } = await supabase
             .from('profiles')
@@ -114,10 +112,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         if (profileData) {
-            console.log('[Auth] Profile loaded:', profileData.name, '/', profileData.role);
             const completeUser = buildUser(authUser, profileData as UserProfile);
             setUserFn(completeUser);
-            console.log('[Auth] User state set successfully');
         } else {
             console.warn('[Auth] No profile found for user:', authUser.id);
             setUserFn(null);
@@ -132,11 +128,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         let mounted = true;
 
         const initialize = async () => {
-            console.log('[Auth] Initializing...');
             try {
-                // getSession() reads from Supabase's internal localStorage store.
-                // This is the safe, single call for restoring the session on mount.
-                console.log('[Auth] Getting session...');
                 const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
                 if (sessionError) {
@@ -148,7 +140,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 if (session?.user) {
                     await loadProfile(session.user, (u) => { if (mounted) setUser(u); });
                 } else {
-                    console.log('[Auth] No active session found');
                     if (mounted) setUser(null);
                 }
             } catch (err: any) {
@@ -158,7 +149,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 initDoneRef.current = true;
                 if (mounted) {
                     setIsLoading(false);
-                    console.log('[Auth] Loading complete');
                 }
             }
         };
@@ -170,7 +160,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // (login, logout, token refresh — NOT the initial session restore)
         // ================================================
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log(`[Auth] State change: ${event}`);
 
             // Skip events that fire before/during initialization —
             // initialize() already handles the startup session.

@@ -8,9 +8,9 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
-    # Supabase Configuration
-    supabase_url: str = "https://zilbigcueizkfvvpuwjp.supabase.co"
-    supabase_anon_key: str = "sb_publishable_uSaP-URx2fUnvoWgMrL7-g_zEnamxgY"
+    # Supabase Configuration (MUST be set via environment variables)
+    supabase_url: str = ""
+    supabase_anon_key: str = ""
     # Service role key - bypasses RLS (keep secret, server-side only)
     supabase_service_role_key: str = ""
     

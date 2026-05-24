@@ -230,22 +230,12 @@ export const projectService = {
             const dbData = mapToDb(updates);
             dbData.updated_at = new Date().toISOString();
 
-            console.log('[DB-SVC-1] Supabase update payload keys:', Object.keys(dbData));
-            if (dbData.tech_pack_files) {
-                console.log('[DB-SVC-1] tech_pack_files in payload:', dbData.tech_pack_files.length, 'files');
-            }
-
             const { data, error } = await supabase
                 .from('projects')
                 .update(dbData)
                 .eq('id', id)
                 .select()
                 .single();
-
-            console.log('[DB-SVC-2] Supabase response:', { hasData: !!data, error: error?.message || null });
-            if (data) {
-                console.log('[DB-SVC-2] Returned tech_pack_files count:', (data.tech_pack_files || []).length);
-            }
 
             if (error) {
                 console.error('[DB-SVC-2] Supabase update ERROR:', error);

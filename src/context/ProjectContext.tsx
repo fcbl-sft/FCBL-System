@@ -96,7 +96,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
             // wait briefly and try again (session may not have been ready)
             if (result.length === 0 && !retriedRef.current) {
                 retriedRef.current = true;
-                console.log('[ProjectContext] No projects on first fetch, retrying in 1.5s...');
                 setTimeout(async () => {
                     await refreshProjects();
                 }, 1500);
@@ -114,14 +113,12 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     useEffect(() => {
         if (!isAuthenticated || !user) return;
 
-        console.log('[ProjectContext] Setting up real-time subscription...');
         const channel = supabase
             .channel('projects-realtime')
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'projects' },
                 (payload: any) => {
-                    console.log('[ProjectContext] Real-time event:', payload.eventType, payload.new?.id || payload.old?.id);
 
                     if (payload.eventType === 'UPDATE' && payload.new) {
                         try {
@@ -148,12 +145,9 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
                     }
                 }
             )
-            .subscribe((status: string) => {
-                console.log('[ProjectContext] Real-time subscription status:', status);
-            });
+            .subscribe();
 
         return () => {
-            console.log('[ProjectContext] Cleaning up real-time subscription');
             supabase.removeChannel(channel);
         };
     }, [isAuthenticated, user]);
@@ -206,10 +200,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, []);
 
     const updateProject = useCallback(async (id: string, updates: Partial<Project>) => {
-        console.log('[DB-SAVE-1] updateProject called:', { id, updateKeys: Object.keys(updates) });
-        if (updates.techPackFiles) {
-            console.log('[DB-SAVE-1] techPackFiles count:', updates.techPackFiles.length);
-        }
         setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
 
         try {
@@ -217,13 +207,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
                 ...updates,
                 updatedAt: new Date().toISOString()
             };
-            console.log('[DB-SAVE-2] Sending to projectService.updateProject:', { id, payloadKeys: Object.keys(payload) });
             const { data, error } = await projectService.updateProject(id, payload);
-
-            console.log('[DB-SAVE-3] Database response:', { data: data ? 'received' : 'null', error });
-            if (data?.techPackFiles) {
-                console.log('[DB-SAVE-3] Saved techPackFiles count:', data.techPackFiles.length);
-            }
 
             if (error) {
                 throw new Error(error);

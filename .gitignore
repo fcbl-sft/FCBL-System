@@ -34,3 +34,8 @@ npm-debug.log*
 # Testing
 coverage/
 .pytest_cache/
+
+# Sensitive / generated files (NEVER commit)
+backend/.env
+git_status.txt
+metadata.json

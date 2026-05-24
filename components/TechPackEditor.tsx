@@ -116,7 +116,7 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
             const fileExt = file.name.split('.').pop();
             const fileName = `${project.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-            console.log('[UPLOAD-2] Uploading to storage...', { bucket: 'tech-packs', path: fileName, fileSize: file.size, fileType: file.type });
+
 
             const { data, error } = await supabase.storage
                 .from('tech-packs')
@@ -125,7 +125,7 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
                     upsert: false
                 });
 
-            console.log('[UPLOAD-3] Storage response:', { data, error });
+
 
             if (error) {
                 console.error('[UPLOAD-3] Storage upload FAILED:', error.message, error);
@@ -138,7 +138,7 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
                 .from('tech-packs')
                 .getPublicUrl(data.path);
 
-            console.log('[UPLOAD-4] Public URL result:', { publicUrl: publicUrlData?.publicUrl, path: data.path });
+
 
             if (!publicUrlData?.publicUrl) {
                 console.error('[UPLOAD-4] No public URL returned!');
@@ -157,7 +157,6 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
     // Process and upload files
     const processFiles = async (files: FileList | File[]) => {
         const fileArray = Array.from(files);
-        console.log('[UPLOAD-1] Files selected:', fileArray.map(f => ({ name: f.name, size: f.size, type: f.type })));
         setUploadError(null);
         setUploadSuccess(null);
 
@@ -185,7 +184,7 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
             const result = await uploadToStorage(file);
             clearInterval(progressInterval);
 
-            console.log('[UPLOAD-5] Upload result for', file.name, ':', result);
+
 
             if (result) {
                 const name = prompt(`Enter name for "${file.name}":`, file.name.split('.')[0] || `File ${project.techPackFiles.length + newFiles.length + 1}`);
@@ -202,7 +201,7 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
                         storagePath: result.path || undefined
                     };
                     newFiles.push(newFile);
-                    console.log('[UPLOAD-6] File object created:', JSON.stringify(newFile, null, 2));
+
                 }
             }
 
@@ -217,7 +216,6 @@ const TechPackEditor: React.FC<TechPackEditorProps> = ({
 
         if (newFiles.length > 0) {
             const updatedFiles = [...(project.techPackFiles || []), ...newFiles];
-            console.log('[UPLOAD-7] Calling onUpdateProject with techPackFiles:', JSON.stringify(updatedFiles, null, 2));
             const updatedProject = {
                 ...project,
                 techPackFiles: updatedFiles
